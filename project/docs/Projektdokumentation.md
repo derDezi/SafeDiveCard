@@ -112,6 +112,9 @@ PDF-Dateien lokal per Skript auslesen.
 - UI erweitert fuer mehrere Taucher:
 - Dynamisches Hinzufuegen/Entfernen von Tauchern im Formular.
 - Vorschau/PDF zeigt alle Taucher in einer tabellarischen `Who`-Sektion.
+- Pro Taucher sind jetzt bis zu 2 Notfallkontakte im Formular moeglich.
+- `Sex` wurde von Freitext auf ein Auswahlfeld mit ausgeschriebenen Werten umgestellt.
+- `Breathing Gas` wurde auf ein Auswahlfeld mit Presets (`Air`, `EAN32`, `EAN36`, `EAN40`) erweitert; bei `Other...` erscheint wieder ein Freitextfeld.
 - PDF-Layout angenaehert an die Vorlage:
 - Klare Sektionen `Where`, `What`, `Who`
 - Tabellenrahmen mit druckfreundlicher Darstellung
@@ -121,16 +124,30 @@ PDF-Dateien lokal per Skript auslesen.
 - Kartenvorschau wurde spaeter in einen separaten Bereich oberhalb der A4-Card-Preview verschoben (Screen-only), damit der Druckexport fokussiert bleibt.
 - Zusaetzliche Koordinatenfelder (`Latitude`, `Longitude`) im Formular.
 - Adressauflösung ueber Button `Locate Address` (Nominatim/OSM) fuer praeziseren Marker.
+- `Locate Address` kann zusaetzlich eine grobe Hoehe ueber Meeresspiegel automatisch setzen, wenn der externe Hoehendienst erreichbar ist.
 - Koordinatenanzeige als Dezimalgrad.
 - Koordinaten werden auf 5 Nachkommastellen gerundet (praktischer Bereich um wenige Meter, Genauigkeit haengt von Quelldaten ab).
 - Mehrsprachigkeit (UI + Export) umgesetzt:
 - Englisch ist immer die Basissprache.
 - Optional zusaetzliche Landessprache: `Deutsch` oder `Spanisch`.
 - Ausgabeformat ist bei aktivierter Zusatzsprache zweisprachig (`English / Local`).
+- Inzwischen unterstuetzt der Export auch 3 Sprachen (`EN + Local + Optional Extra`) mit dynamischer Skalierung und kompakterem Tabellenlayout.
 - Exportlayout deutlich an Vorlage angenaehert:
 - Linke Abschnittsleiste (`Where/What/Who`) im Kartenstil.
 - `Who` als transponierte Tabelle (Merkmal links, Taucher als Spalten) fuer bessere Drucklesbarkeit.
 - A4-Print-CSS mit optimierter Schriftgroesse, Abstaenden und Seitenlayout.
+- Export wurde weiter verfeinert:
+- Echte A4-Seitencontainer statt losem Blocklayout.
+- Dynamische Seitenskalierung pro Exportseite.
+- Gewichtete Tabellenzeilen in `Who` fuer bessere Verteilung bei langen Inhalten und mehreren Sprachen.
+- `Where` und `What` zentrieren die Werte-Spalte im Export.
+- `Local Emergency Number` steht im Export oben in `Where` und wird fett dargestellt.
+- Export-Header nutzt jetzt die Brand `SafeDiveCard.com`.
+- QR-Codes im Export:
+- `Dive Base Phone` als direkter Anruf (`tel:`).
+- `Dive Insurance Hotline` als direkter Anruf (`tel:`).
+- `Emergency Contact` als direkter Anruf (`tel:`), bei 2 Kontakten mit gespiegelt angeordneten QR-Codes fuer leichteres Scannen.
+- `Own Phone` als `vCard`-QR mit `Diver 1` / `Diver 2` vor dem Namen sowie Adresse, Rufnummer und Geburtsdatum.
 
 ## Sprachmodell (v1.0)
 - `meta.language`: immer `en`
@@ -142,7 +159,9 @@ PDF-Dateien lokal per Skript auslesen.
 - Auto-Local wird bei `Locate Address` aus Geokodierung abgeleitet.
 - Fuer Aegypten (`country_code=eg`) wird aktuell `Arabic (ar)` als Local-Sprache gesetzt.
 - Laender-Override vorhanden:
-- `country_override_enabled`: standardmaessig `true`
+- Override erfolgt jetzt zweistufig:
+- Zuerst Kontinent (`Europe`, `Africa`, `Asia`) oder `No override`
+- Danach Land innerhalb des gewaehlten Kontinents
 - `country_override_code`: optionales Land fuer erzwungene Local-Sprache
 - Bei aktivem Override hat Override Vorrang vor Auto-Local.
 - UI-Beschriftungen nutzen nur `EN + Optional Extra`.
@@ -172,6 +191,9 @@ PDF-Dateien lokal per Skript auslesen.
 - Export-Headertitel bleibt einzeilig; bei zu langem mehrsprachigen Text wird die Schrift automatisch verkleinert.
 - `Where/What/Who`-Seitenleiste verbreitert und zentriert.
 - Angaben im `Who`-Tabellenbereich fuer Taucherwerte zentriert.
+- Effektive Seitenhoehe wurde leicht unter A4-Maximum abgesenkt, um Browser-/PDF-Randartefakte besser abzufangen.
+- Erste Exportseite nutzt jetzt `Where + What + Who` mit inhaltsgesteuerter Hoehenverteilung (`auto / auto / rest`).
+- Seitenfit prueft nicht nur die Gesamthoehe, sondern auch Zell-/Container-Ueberlaeufe, damit 3-sprachige Inhalte robuster skaliert werden.
 
 ## UI Redesign (Stand)
 - Sticky-Aktionsleiste mit den Hauptaktionen.
@@ -201,6 +223,7 @@ PDF-Dateien lokal per Skript auslesen.
 - Ueberschrift `Languages`
 - Override-Checkbox entfernt
 - Feld klarer benannt als lokale Sprache am Divesite-Land mit optionaler Ueberschreibung.
+- Override-Auswahl inzwischen als 2-stufige Auswahl aufgebaut: Kontinent -> Land.
 - Feld fuer Zusatzsprache benannt als `Anzeigesprache / optionale Zusatzsprache`.
 - Hinweis unter Koordinaten: automatische Befuellung via `Locate Address`.
 - `Add Diver` ans Ende der Taucherliste verschoben.
@@ -224,11 +247,21 @@ PDF-Dateien lokal per Skript auslesen.
 - Feld `Local Emergency Number` im Formular und im Export.
 - Nummer wird aus dem per Adresse ermittelten Land (`country_code`) gesetzt.
 - Sicherheitsregel: Nur verifizierte Nummern werden gesetzt; falls keine verifizierte Zuordnung vorliegt, bleibt das Feld leer.
+- Feldbeschriftungen im Formular/Export wurden sprachlich nachgeschaerft:
+- `Local dive site language (auto by dive site country, optional override)`
+- `Hyperbaric Chamber Information (Address and Emergency Contact Phone)` im Formular
+- `Hyperbaric Chamber` als kompakter Export-Label
+- `Dive Plan Summary (...)`
+- `Medical Conditions`
+- `Health Insurance Provider`
 - Technische Basis:
 - Vollstaendige ISO-Laenderliste in der App vorhanden.
 - Verifizierte Nummern in separatem Mapping; kein blindes `112`-Fallback.
 - Export-Hinweis prominent und zentriert:
 - `Make sure to send a digital copy of this PDF to your dive buddies via email or WhatsApp before the dive.`
+- Toast-/Fehlerhinweise:
+- Fehler-Toasts bleiben jetzt laenger sichtbar (ca. 10 Sekunden).
+- Fehler bei optionalen Zusatzdiensten (z. B. Hoehenabfrage) blockieren `Locate Address` nicht mehr komplett.
 
 ## Dateisortierung (Deployment vs. lokal)
 ### Auf Webserver (Produktivbetrieb)
@@ -244,6 +277,12 @@ PDF-Dateien lokal per Skript auslesen.
 - `project/references/Vorlage.pdf` (Referenzdokument)
 - `project/references/Screenshot 2026-03-03 142026.png` (Vergleich/Designabstimmung)
 - `project/references/Screenshot 2026-03-03 142109.png` (Vergleich/Designabstimmung)
+- `project/references/SafeDiveCard-*.pdf` (lokale Exporttests / nicht fuer Deployment gedacht)
+
+## Git / Repository
+- Projekt wurde lokal als Git-Repository initialisiert und nach GitHub ueberfuehrt.
+- Sensible Beispieldaten unter `project/samples/` werden ueber `.gitignore` vom Repository ausgeschlossen.
+- Export-/Testdateien im Referenzbereich sind weiterhin lokale Arbeitsdateien und sollten bewusst vor Commits geprueft werden.
 
 ## Startanleitung (lokal)
 1. Datei `server/index.html` im Browser oeffnen.

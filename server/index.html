@@ -11,7 +11,7 @@
     <div class="tool-brand" id="toolBrand">
       <img src="assets/Header.png" alt="SafeDiveCard Header Logo" class="tool-brand-logo" id="toolBrandLogo">
       <div class="tool-title-group" id="toolTitleGroup">
-        <h1>SafeDiveCard</h1>
+        <h1>SafeDiveCard<span class="brand-domain">.com</span></h1>
         <p data-i18n-key="header_subtitle">Create an emergency dive card for a safe dive.</p>
       </div>
     </div>
@@ -34,22 +34,18 @@
         <legend>Languages</legend>
         <div class="language-grid">
           <div class="language-field">
-            <label for="countryOverrideCode">Dive site local language (auto by dive site country, optional override)</label>
-            <select id="countryOverrideCode">
+            <label for="countryOverrideContinent">Local dive site language (auto by dive site country, optional override)</label>
+            <select id="countryOverrideContinent">
               <option value="none">No override (use auto local)</option>
-              <option value="de">🇩🇪 Germany (DE)</option>
-              <option value="eg">🇪🇬 Egypt (EG)</option>
-              <option value="es">🇪🇸 Spain (ES)</option>
-              <option value="fr">🇫🇷 France (FR)</option>
-              <option value="it">🇮🇹 Italy (IT)</option>
-              <option value="pt">🇵🇹 Portugal (PT)</option>
-              <option value="nl">🇳🇱 Netherlands (NL)</option>
-              <option value="pl">🇵🇱 Poland (PL)</option>
-              <option value="sa">🇸🇦 Saudi Arabia (SA)</option>
-              <option value="ae">🇦🇪 United Arab Emirates (AE)</option>
-              <option value="ma">🇲🇦 Morocco (MA)</option>
-              <option value="tn">🇹🇳 Tunisia (TN)</option>
-              <option value="dz">🇩🇿 Algeria (DZ)</option>
+              <option value="europe">Europe</option>
+              <option value="africa">Africa</option>
+              <option value="asia">Asia</option>
+            </select>
+          </div>
+          <div class="language-field hidden" id="countryOverrideCountryField">
+            <label for="countryOverrideCountry">Override country</label>
+            <select id="countryOverrideCountry">
+              <option value="none">Select country</option>
             </select>
           </div>
           <div class="language-field">
@@ -90,18 +86,18 @@
           <label><span data-i18n-key="elevation_m">Elevation (m)</span> <input name="dive_site.elevation_m" type="number" step="0.1" required></label>
           <label><span data-i18n-key="latitude_decimal">Latitude (decimal)</span> <input name="dive_site.lat" type="number" step="0.000001" min="-90" max="90"></label>
           <label><span data-i18n-key="longitude_decimal">Longitude (decimal)</span> <input name="dive_site.lon" type="number" step="0.000001" min="-180" max="180"></label>
-          <p class="small-note">Latitude/Longitude can be auto-filled via Locate Address.</p>
+          <p class="small-note">Latitude/Longitude and rough elevation can be auto-filled via Locate Address.</p>
           <label><span data-i18n-key="dive_base_phone">Dive Base Phone</span> <input name="dive_site.dive_base_phone"></label>
           <label><span data-i18n-key="dive_base_website">Dive Base Website</span> <input name="dive_site.dive_base_website"></label>
           <label><span data-i18n-key="oxygen_location">Oxygen Location</span> <input name="dive_site.oxygen_location"></label>
           <label><span data-i18n-key="local_emergency_number">Local Emergency Number</span> <input name="dive_site.local_emergency_number"></label>
           <label><span data-i18n-key="emergency_phone_location">Emergency Phone Location</span> <input name="dive_site.emergency_phone_location"></label>
-          <label><span data-i18n-key="chamber_info">Chamber Info</span> <input name="dive_site.chamber_info"></label>
+          <label><span data-i18n-key="chamber_info">Hyperbaric chamber information (Address and Emergency Contact Phone)</span> <input name="dive_site.chamber_info"></label>
         </fieldset>
 
         <fieldset class="step-section">
           <legend data-i18n-key="dive_plan">Dive Plan</legend>
-          <label><span data-i18n-key="summary">Summary</span> <input name="plan.summary" required></label>
+          <label><span data-i18n-key="summary">Dive plan summary (for example: number of days, planned dives per day, special conditions)</span> <input name="plan.summary" required></label>
           <label><span data-i18n-key="max_depth_m">Max Depth (m)</span> <input name="plan.max_depth_m" type="number" step="0.1" required></label>
           <label>Divers in Group <input name="plan.divers_in_group" type="number" min="1" step="1" required></label>
         </fieldset>

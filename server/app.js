@@ -18,9 +18,35 @@ const addDiverBtn = document.getElementById("addDiverBtn");
 const diversContainer = document.getElementById("diversContainer");
 const optionalExtraLanguageSelect = document.getElementById("optionalExtraLanguage");
 const autoLocalInfo = document.getElementById("autoLocalInfo");
-const countryOverrideCodeSelect = document.getElementById("countryOverrideCode");
+const countryOverrideContinentSelect = document.getElementById("countryOverrideContinent");
+const countryOverrideCountryField = document.getElementById("countryOverrideCountryField");
+const countryOverrideCountrySelect = document.getElementById("countryOverrideCountry");
 const langSupportNote = document.getElementById("langSupportNote");
 const toastContainer = document.getElementById("toastContainer");
+const TOAST_DURATION_MS = 10000;
+const BREATHING_GAS_OTHER_VALUE = "__other__";
+const PRESET_BREATHING_GASES = ["Air", "EAN32 (Nitrox 32)", "EAN36 (Nitrox 36)", "EAN40 (Nitrox 40)"];
+const COUNTRY_OVERRIDE_OPTIONS = {
+  europe: [
+    { code: "de", label: "Germany (DE)" },
+    { code: "es", label: "Spain (ES)" },
+    { code: "fr", label: "France (FR)" },
+    { code: "it", label: "Italy (IT)" },
+    { code: "pt", label: "Portugal (PT)" },
+    { code: "nl", label: "Netherlands (NL)" },
+    { code: "pl", label: "Poland (PL)" }
+  ],
+  africa: [
+    { code: "eg", label: "Egypt (EG)" },
+    { code: "ma", label: "Morocco (MA)" },
+    { code: "tn", label: "Tunisia (TN)" },
+    { code: "dz", label: "Algeria (DZ)" }
+  ],
+  asia: [
+    { code: "sa", label: "Saudi Arabia (SA)" },
+    { code: "ae", label: "United Arab Emirates (AE)" }
+  ]
+};
 
 const FULLY_TRANSLATED = new Set(["de", "es", "ar", "fr", "it"]);
 const LANGUAGE_LABEL = {
@@ -119,7 +145,7 @@ const I18N_EXTRA_TRANSLATIONS = {
   oxygen_location: { fr: "Emplacement oxygene", it: "Posizione ossigeno" },
   local_emergency_number: { fr: "Numero urgence local", it: "Numero emergenza locale" },
   emergency_phone_location: { fr: "Emplacement telephone urgence", it: "Posizione telefono emergenza" },
-  chamber_info: { fr: "Info caisson hyperbare", it: "Info camera iperbarica" },
+  chamber_info: { fr: "Informations caisson hyperbare", it: "Informazioni camera iperbarica" },
   dive_plan: { fr: "Plan de plongee", it: "Piano immersione" },
   summary: { fr: "Resume", it: "Riepilogo" },
   max_depth_m: { fr: "Profondeur max (m)", it: "Profondita massima (m)" },
@@ -140,9 +166,9 @@ const I18N_EXTRA_TRANSLATIONS = {
   certifications: { fr: "Certifications", it: "Certificazioni" },
   gas: { fr: "Gaz", it: "Gas" },
   allergies: { fr: "Allergies", it: "Allergie" },
-  conditions: { fr: "Pathologies", it: "Patologie" },
+  conditions: { fr: "Pathologies medicales", it: "Condizioni mediche" },
   medications: { fr: "Medicaments", it: "Farmaci" },
-  health_ins: { fr: "Assur. sante", it: "Assic. sanitaria" },
+  health_ins: { fr: "Assureur sante", it: "Fornitore assicurazione sanitaria" },
   dive_ins: { fr: "Assur. plongee", it: "Assic. immersione" },
   member_no: { fr: "N. membre", it: "N. membro" },
   hotline: { fr: "Hotline", it: "Hotline" },
@@ -166,9 +192,9 @@ const RAW_TRANSLATIONS = {
     "Certifications (comma separated)": "Certifications (separees par virgule)",
     "Breathing Gas": "Gaz respiratoire",
     "Allergies (comma separated)": "Allergies (separees par virgule)",
-    "Conditions (comma separated)": "Pathologies (separees par virgule)",
+    "Medical Conditions (comma separated)": "Pathologies medicales (separees par virgule)",
     "Medications (comma separated)": "Medicaments (separes par virgule)",
-    "Health Insurance": "Assurance sante",
+    "Health Insurance Provider": "Assureur sante",
     "Dive Insurance Provider": "Fournisseur assurance plongee",
     "Dive Insurance Member No": "Numero membre assurance plongee",
     "Dive Insurance Hotline": "Hotline assurance plongee",
@@ -182,7 +208,7 @@ const RAW_TRANSLATIONS = {
     "Dive Count": "Nombre de plongees",
     "Breathing Gas": "Gaz respiratoire",
     "Emergency Contact": "Contact urgence",
-    "Health Insurance": "Assurance sante",
+    "Health Insurance Provider": "Assureur sante",
     "Dive Insurance": "Assurance plongee",
     "Own Phone": "Telephone personnel"
   },
@@ -196,9 +222,9 @@ const RAW_TRANSLATIONS = {
     "Certifications (comma separated)": "Certificazioni (separate da virgola)",
     "Breathing Gas": "Gas respiratorio",
     "Allergies (comma separated)": "Allergie (separate da virgola)",
-    "Conditions (comma separated)": "Patologie (separate da virgola)",
+    "Medical Conditions (comma separated)": "Condizioni mediche (separate da virgola)",
     "Medications (comma separated)": "Farmaci (separati da virgola)",
-    "Health Insurance": "Assicurazione sanitaria",
+    "Health Insurance Provider": "Fornitore assicurazione sanitaria",
     "Dive Insurance Provider": "Fornitore assicurazione immersione",
     "Dive Insurance Member No": "Numero membro assicurazione immersione",
     "Dive Insurance Hotline": "Hotline assicurazione immersione",
@@ -212,7 +238,7 @@ const RAW_TRANSLATIONS = {
     "Dive Count": "Numero immersioni",
     "Breathing Gas": "Gas respiratorio",
     "Emergency Contact": "Contatto emergenza",
-    "Health Insurance": "Assicurazione sanitaria",
+    "Health Insurance Provider": "Fornitore assicurazione sanitaria",
     "Dive Insurance": "Assicurazione immersione",
     "Own Phone": "Telefono personale"
   }
@@ -239,9 +265,9 @@ const I18N = {
   oxygen_location: { en: "Oxygen Location", de: "Standort Sauerstoff", es: "Ubicación de oxígeno", ar: "مكان الاكسجين" },
   local_emergency_number: { en: "Local Emergency Number", de: "Lokale Notrufnummer", es: "Numero local de emergencia", ar: "رقم الطوارئ المحلي" },
   emergency_phone_location: { en: "Emergency Phone Location", de: "Standort Notruftelefon", es: "Ubicación teléfono de emergencia", ar: "مكان هاتف الطوارئ" },
-  chamber_info: { en: "Chamber Info", de: "Druckkammer-Info", es: "Info de cámara hiperbárica", ar: "معلومات غرفة الضغط" },
+  chamber_info: { en: "Hyperbaric Chamber Information (Address and Emergency Contact Phone)", de: "Informationen zur Druckkammer (Adresse und Notfall-Telefonnummer)", es: "Informacion de camara hiperbárica (direccion y telefono de emergencia)", ar: "معلومات غرفة الضغط (العنوان ورقم هاتف الطوارئ)" },
   dive_plan: { en: "Dive Plan", de: "Tauchplan", es: "Plan de buceo", ar: "خطة الغوص" },
-  summary: { en: "Summary", de: "Zusammenfassung", es: "Resumen", ar: "الملخص" },
+  summary: { en: "Dive Plan Summary (for example: number of days, planned dives per day, special conditions)", de: "Zusammenfassung des Tauchplans (zum Beispiel: Anzahl der Tage, geplante Tauchgaenge pro Tag, besondere Bedingungen)", es: "Resumen del plan de buceo (por ejemplo: numero de dias, inmersiones planificadas por dia, condiciones especiales)", ar: "ملخص خطة الغوص (على سبيل المثال: عدد الايام والغوصات المخطط لها يوميا والظروف الخاصة)" },
   max_depth_m: { en: "Max Depth (m)", de: "Maximaltiefe (m)", es: "Profundidad máxima (m)", ar: "اقصى عمق (م)" },
   divers: { en: "Divers", de: "Taucher", es: "Buzos", ar: "الغواصون" },
   btn_add_diver: { en: "Add Diver", de: "Taucher hinzufügen", es: "Añadir buzo", ar: "اضافة غواص" },
@@ -260,9 +286,10 @@ const I18N = {
   certifications: { en: "Certifications", de: "Zertifizierungen", es: "Certificaciones", ar: "الشهادات" },
   gas: { en: "Gas", de: "Gas", es: "Gas", ar: "الغاز" },
   allergies: { en: "Allergies", de: "Allergien", es: "Alergias", ar: "الحساسية" },
-  conditions: { en: "Conditions", de: "Vorerkrankungen", es: "Patologías", ar: "الحالات المرضية" },
+  conditions: { en: "Medical Conditions", de: "Medizinische Vorerkrankungen", es: "Condiciones medicas", ar: "الحالات الطبية" },
   medications: { en: "Medications", de: "Medikamente", es: "Medicamentos", ar: "الادوية" },
-  health_ins: { en: "Health Ins.", de: "Krankenvers.", es: "Seguro salud", ar: "التامين الصحي" },
+  health_ins: { en: "Health Insurance Provider", de: "Krankenversicherer", es: "Proveedor del seguro medico", ar: "مزود التأمين الصحي" },
+  hyperbaric_chamber: { en: "Hyperbaric Chamber", de: "Druckkammer", es: "Camara hiperbárica", ar: "غرفة الضغط" },
   dive_ins: { en: "Dive Ins.", de: "Tauchvers.", es: "Seguro buceo", ar: "تامين الغوص" },
   member_no: { en: "Member No", de: "Mitglied-Nr.", es: "N.º socio", ar: "رقم العضوية" },
   hotline: { en: "Hotline", de: "Hotline", es: "Línea directa", ar: "الطوارئ" },
@@ -282,10 +309,11 @@ renderCard(state);
 renderReadiness(state);
 updateLanguageUiState();
 syncHeaderLogoHeight();
-fitCardHeaderTitle();
+fitCardPages();
 
 window.addEventListener("resize", syncHeaderLogoHeight);
-window.addEventListener("resize", fitCardHeaderTitle);
+window.addEventListener("resize", fitCardPages);
+window.addEventListener("beforeprint", fitCardPages);
 
 form.addEventListener("input", () => {
   readFormIntoState(state);
@@ -302,8 +330,21 @@ optionalExtraLanguageSelect.addEventListener("change", () => {
   updateLanguageUiState();
 });
 
-countryOverrideCodeSelect.addEventListener("change", () => {
-  state.meta.country_override_code = countryOverrideCodeSelect.value;
+countryOverrideContinentSelect.addEventListener("change", () => {
+  const continent = countryOverrideContinentSelect.value;
+  populateCountryOverrideCountrySelect(continent);
+  state.meta.country_override_code = continent === "none"
+    ? "none"
+    : (countryOverrideCountrySelect.value || "none");
+  renderStaticI18n();
+  renderDiversInputs(state.divers);
+  renderCard(state);
+  renderReadiness(state);
+  updateLanguageUiState();
+});
+
+countryOverrideCountrySelect.addEventListener("change", () => {
+  state.meta.country_override_code = countryOverrideCountrySelect.value || "none";
   renderStaticI18n();
   renderDiversInputs(state.divers);
   renderCard(state);
@@ -343,6 +384,16 @@ diversContainer.addEventListener("click", (event) => {
   renderCard(state);
   renderReadiness(state);
   setStatus("Diver removed.");
+});
+
+diversContainer.addEventListener("change", (event) => {
+  const field = event.target?.dataset?.diverField;
+  if (field !== "breathing_gas_select") return;
+  const idx = Number(event.target.dataset.diverIndex);
+  toggleBreathingGasOtherField(idx, event.target.value === BREATHING_GAS_OTHER_VALUE);
+  readFormIntoState(state);
+  renderCard(state);
+  renderReadiness(state);
 });
 
 addDiverBtn.addEventListener("click", () => {
@@ -421,11 +472,16 @@ locateAddressBtn.addEventListener("click", async () => {
     state.dive_site.local_emergency_number = getLocalEmergencyNumber(state.dive_site.country_code);
     setField("dive_site.local_emergency_number", state.dive_site.local_emergency_number);
     state.meta.auto_local_language = resolveLocalLanguage(state.dive_site.country_code);
+    const elevationM = await fetchApproxElevation(coords.lat, coords.lon);
+    if (elevationM !== null) {
+      setField("dive_site.elevation_m", String(elevationM));
+    }
     readFormIntoState(state);
     renderCard(state);
     renderReadiness(state);
     updateLanguageUiState();
-    setStatus(`Address resolved: ${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)}`);
+    const elevationText = elevationM !== null ? ` | Elevation: ~${elevationM} m` : "";
+    setStatus(`Address resolved: ${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)}${elevationText}`);
   } catch (err) {
     showErrorToast(`Address lookup failed: ${err.message}`);
   }
@@ -504,6 +560,10 @@ function createDefaultState() {
   };
 }
 
+function createEmptyEmergencyContact() {
+  return { name: "", relation: "", phone: "" };
+}
+
 function createEmptyDiver() {
   return {
     full_name: "",
@@ -521,7 +581,7 @@ function createEmptyDiver() {
       dive_insurance_member_no: "",
       dive_insurance_hotline: ""
     },
-    emergency_contacts: [{ name: "", relation: "", phone: "" }],
+    emergency_contacts: [createEmptyEmergencyContact(), createEmptyEmergencyContact()],
     phone: ""
   };
 }
@@ -556,7 +616,9 @@ function loadStateFromData(target, data) {
 
 function hydrateFormFromState(data) {
   optionalExtraLanguageSelect.value = data.meta.optional_extra_language || "none";
-  countryOverrideCodeSelect.value = data.meta.country_override_code || "none";
+  const continent = getCountryOverrideContinent(data.meta.country_override_code);
+  countryOverrideContinentSelect.value = continent;
+  populateCountryOverrideCountrySelect(continent, data.meta.country_override_code || "none");
   setField("dive_site.name", data.dive_site.name);
   setField("dive_site.address", data.dive_site.address);
   setField("dive_site.elevation_m", data.dive_site.elevation_m);
@@ -588,22 +650,21 @@ function renderDiversInputs(divers) {
         </div>
         <div class="diver-grid">
           ${inputField(idx, "full_name", biRaw("Full Name", "Voller Name", "Nombre completo", "الاسم الكامل"), diver.full_name, "text", true)}
-          ${inputField(idx, "sex", biRaw("Sex (M/F/X)", "Geschlecht (M/F/X)", "Sexo (M/F/X)", "الجنس (M/F/X)"), diver.sex, "text", true)}
+          ${selectField(idx, "sex", biRaw("Sex", "Geschlecht", "Sexo", "الجنس"), diver.sex, getSexOptions(), true)}
           ${inputField(idx, "birth_date", biRaw("Birth Date", "Geburtsdatum", "Fecha de nacimiento", "تاريخ الميلاد"), diver.birth_date, "date", true)}
           ${inputField(idx, "address", bi("address"), diver.address, "text", true)}
           ${inputField(idx, "dive_count", biRaw("Dive Count", "Tauchgänge", "Inmersiones", "عدد الغطسات"), String(diver.dive_count), "number", true)}
           ${inputField(idx, "certifications", biRaw("Certifications (comma separated)", "Zertifizierungen (kommagetrennt)", "Certificaciones (separadas por comas)", "الشهادات (مفصولة بفاصلة)"), (diver.certifications || []).join(", "), "text", true)}
-          ${inputField(idx, "breathing_gas", biRaw("Breathing Gas", "Atemgas", "Gas respiratorio", "غاز التنفس"), diver.breathing_gas, "text", true)}
+          ${breathingGasField(idx, diver.breathing_gas)}
           ${inputField(idx, "allergies", biRaw("Allergies (comma separated)", "Allergien (kommagetrennt)", "Alergias (separadas por comas)", "الحساسية (مفصولة بفاصلة)"), (diver.allergies || []).join(", "), "text", false)}
-          ${inputField(idx, "conditions", biRaw("Conditions (comma separated)", "Vorerkrankungen (kommagetrennt)", "Patologías (separadas por comas)", "الحالات المرضية (مفصولة بفاصلة)"), (diver.medical?.conditions || []).join(", "), "text", false)}
+          ${inputField(idx, "conditions", biRaw("Medical Conditions (comma separated)", "Medizinische Vorerkrankungen (kommagetrennt)", "Condiciones medicas (separadas por comas)", "الحالات الطبية (مفصولة بفاصلة)"), (diver.medical?.conditions || []).join(", "), "text", false)}
           ${inputField(idx, "medications", biRaw("Medications (comma separated)", "Medikamente (kommagetrennt)", "Medicamentos (separados por comas)", "الادوية (مفصولة بفاصلة)"), (diver.medical?.medications || []).join(", "), "text", false)}
-          ${inputField(idx, "health_insurance", biRaw("Health Insurance", "Krankenversicherung", "Seguro de salud", "التامين الصحي"), diver.insurance?.health_insurance || "", "text", true)}
+          ${inputField(idx, "health_insurance", biRaw("Health Insurance Provider", "Krankenversicherer", "Proveedor del seguro medico", "مزود التأمين الصحي"), diver.insurance?.health_insurance || "", "text", true)}
           ${inputField(idx, "dive_insurance_provider", biRaw("Dive Insurance Provider", "Tauchversicherung Anbieter", "Proveedor seguro de buceo", "مزود تامين الغوص"), diver.insurance?.dive_insurance_provider || "", "text", false)}
           ${inputField(idx, "dive_insurance_member_no", biRaw("Dive Insurance Member No", "Tauchversicherung Mitglied-Nr.", "N.º socio seguro de buceo", "رقم عضو تامين الغوص"), diver.insurance?.dive_insurance_member_no || "", "text", false)}
           ${inputField(idx, "dive_insurance_hotline", biRaw("Dive Insurance Hotline", "Tauchversicherung Hotline", "Línea directa seguro de buceo", "خط طوارئ تامين الغوص"), diver.insurance?.dive_insurance_hotline || "", "text", false)}
-          ${inputField(idx, "em_name", biRaw("Emergency Contact Name", "Notfallkontakt Name", "Nombre contacto emergencia", "اسم جهة اتصال الطوارئ"), diver.emergency_contacts?.[0]?.name || "", "text", true)}
-          ${inputField(idx, "em_relation", biRaw("Emergency Contact Relation", "Notfallkontakt Beziehung", "Relación contacto emergencia", "صلة جهة اتصال الطوارئ"), diver.emergency_contacts?.[0]?.relation || "", "text", true)}
-          ${inputField(idx, "em_phone", biRaw("Emergency Contact Phone", "Notfallkontakt Telefon", "Teléfono contacto emergencia", "هاتف جهة اتصال الطوارئ"), diver.emergency_contacts?.[0]?.phone || "", "text", true)}
+          ${emergencyContactFields(idx, 0, diver.emergency_contacts?.[0], true)}
+          ${emergencyContactFields(idx, 1, diver.emergency_contacts?.[1], false)}
           ${inputField(idx, "phone", bi("own_phone"), diver.phone || "", "text", true)}
         </div>
       </section>
@@ -625,6 +686,51 @@ function inputField(index, field, label, value, type, required) {
       ${required ? "required" : ""}
     >
   </label>`;
+}
+
+function selectField(index, field, label, value, options, required) {
+  const optionHtml = options
+    .map((option) => `<option value="${escapeHtml(option.value)}"${option.value === value ? " selected" : ""}>${escapeHtml(option.label)}</option>`)
+    .join("");
+  return `
+  <label>${escapeHtml(label)}
+    <select
+      data-diver-index="${index}"
+      data-diver-field="${field}"
+      ${required ? "required" : ""}
+    >
+      ${optionHtml}
+    </select>
+  </label>`;
+}
+
+function breathingGasField(index, value) {
+  const choice = getBreathingGasChoice(value);
+  const customValue = choice === BREATHING_GAS_OTHER_VALUE ? value : "";
+  const otherLabelClass = choice === BREATHING_GAS_OTHER_VALUE ? "" : " hidden";
+  return `
+  ${selectField(index, "breathing_gas_select", biRaw("Breathing Gas", "Atemgas", "Gas respiratorio", "غاز التنفس"), choice, getBreathingGasOptions(), true)}
+  <label class="breathing-gas-other${otherLabelClass}" data-breathing-gas-other-wrapper="${index}">${escapeHtml(biRaw("Other Breathing Gas", "Anderes Atemgas", "Otro gas respiratorio", "غاز تنفس اخر"))}
+    <input
+      data-diver-index="${index}"
+      data-diver-field="breathing_gas_other"
+      type="text"
+      value="${escapeHtml(customValue)}"
+      ${choice === BREATHING_GAS_OTHER_VALUE ? "required" : ""}
+      ${choice === BREATHING_GAS_OTHER_VALUE ? "" : "disabled"}
+    >
+  </label>`;
+}
+
+function emergencyContactFields(diverIndex, contactIndex, contact, required) {
+  const suffix = contactIndex + 1;
+  const safeContact = contact || createEmptyEmergencyContact();
+  const requiredLabel = required ? " *" : " (optional)";
+  return `
+  ${inputField(diverIndex, `em_name_${suffix}`, `${biRaw("Emergency Contact Name", "Notfallkontakt Name", "Nombre contacto emergencia", "اسم جهة اتصال الطوارئ")} ${suffix}${requiredLabel}`, safeContact.name || "", "text", required)}
+  ${inputField(diverIndex, `em_relation_${suffix}`, `${biRaw("Emergency Contact Relation", "Notfallkontakt Beziehung", "Relación contacto emergencia", "صلة جهة اتصال الطوارئ")} ${suffix}${requiredLabel}`, safeContact.relation || "", "text", required)}
+  ${inputField(diverIndex, `em_phone_${suffix}`, `${biRaw("Emergency Contact Phone", "Notfallkontakt Telefon", "Teléfono contacto emergencia", "هاتف جهة اتصال الطوارئ")} ${suffix}${requiredLabel}`, safeContact.phone || "", "text", required)}
+  `;
 }
 
 function downloadJsonFile(payload, filename) {
@@ -655,7 +761,7 @@ function readFormIntoState(data) {
   data.plan.max_depth_m = toNum(getField("plan.max_depth_m"));
   data.plan.divers_in_group = Math.max(1, Math.trunc(toNum(getField("plan.divers_in_group"))));
 
-  const rows = [...diversContainer.querySelectorAll("input[data-diver-index]")];
+  const rows = [...diversContainer.querySelectorAll("[data-diver-index][data-diver-field]")];
   const map = new Map();
   for (const row of rows) {
     const idx = Number(row.dataset.diverIndex);
@@ -667,6 +773,24 @@ function readFormIntoState(data) {
   const divers = [...map.entries()]
     .sort((a, b) => a[0] - b[0])
     .map(([, d]) => {
+      const breathingGas = d.breathing_gas_select === BREATHING_GAS_OTHER_VALUE
+        ? (d.breathing_gas_other || "")
+        : (d.breathing_gas_select || "");
+      const emergencyContacts = [
+        {
+          name: d.em_name_1 || "",
+          relation: d.em_relation_1 || "",
+          phone: d.em_phone_1 || ""
+        },
+        {
+          name: d.em_name_2 || "",
+          relation: d.em_relation_2 || "",
+          phone: d.em_phone_2 || ""
+        }
+      ].filter((contact, index) => {
+        if (index === 0) return true;
+        return contact.name || contact.relation || contact.phone;
+      });
       return {
         full_name: d.full_name || "",
         sex: d.sex || "M",
@@ -674,7 +798,7 @@ function readFormIntoState(data) {
         address: d.address || "",
         dive_count: Math.trunc(toNum(d.dive_count)),
         certifications: splitCsv(d.certifications),
-        breathing_gas: d.breathing_gas || "",
+        breathing_gas: breathingGas,
         allergies: splitCsv(d.allergies),
         medical: {
           conditions: splitCsv(d.conditions),
@@ -686,13 +810,7 @@ function readFormIntoState(data) {
           dive_insurance_member_no: d.dive_insurance_member_no || "",
           dive_insurance_hotline: d.dive_insurance_hotline || ""
         },
-        emergency_contacts: [
-          {
-            name: d.em_name || "",
-            relation: d.em_relation || "",
-            phone: d.em_phone || ""
-          }
-        ],
+        emergency_contacts: emergencyContacts.length > 0 ? emergencyContacts : [createEmptyEmergencyContact()],
         phone: d.phone || ""
       };
     });
@@ -704,67 +822,164 @@ function renderCard(data) {
   const coordsText = formatCoordinates(data.dive_site.coordinates);
   const mapHtml = buildMapHtml(data.dive_site);
   const whoSections = buildWhoSections(data.divers, 2);
+  const exportLanguageCount = getExportLanguages().length;
   mapPreviewEl.innerHTML = mapHtml;
 
   cardEl.innerHTML = `
-    <div class="card-header">
-      <h3>${biExportText("card_title")}</h3>
-      <p>SafeDiveCard</p>
-    </div>
-
-    <section class="card-section-row">
-      <div class="side-label">${biHtml("where")}</div>
-      <div class="section-body">
-        <table class="data-table compact">
-          <tbody>
-            <tr><th>${biHtml("site")}</th><td>${escapeHtml(data.dive_site.name)}</td></tr>
-            <tr><th>${biHtml("address")}</th><td>${escapeHtml(data.dive_site.address)}</td></tr>
-            <tr><th>${biHtml("elevation_m")}</th><td>${escapeHtml(String(data.dive_site.elevation_m))} m</td></tr>
-            <tr><th>${biHtml("coordinates")}</th><td>${escapeHtml(coordsText)}</td></tr>
-            <tr><th>${biHtml("dive_base_phone")}</th><td>${escapeHtml(data.dive_site.dive_base_phone || "-")}</td></tr>
-            <tr><th>${biHtml("dive_base_website")}</th><td>${escapeHtml(data.dive_site.dive_base_website || "-")}</td></tr>
-            <tr><th>${biHtml("oxygen_location")}</th><td>${escapeHtml(data.dive_site.oxygen_location || "-")}</td></tr>
-            <tr><th>${biHtml("local_emergency_number")}</th><td>${escapeHtml(data.dive_site.local_emergency_number || "-")}</td></tr>
-            <tr><th>${biHtml("emergency_phone_location")}</th><td>${escapeHtml(data.dive_site.emergency_phone_location || "-")}</td></tr>
-            <tr><th>${biHtml("chamber_info")}</th><td>${escapeHtml(data.dive_site.chamber_info || "-")}</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="card-section-row">
-      <div class="side-label">${biHtml("what")}</div>
-      <div class="section-body">
-        <table class="data-table compact">
-          <tbody>
-            <tr><th>${biHtml("plan")}</th><td>${escapeHtml(data.plan.summary)}</td></tr>
-            <tr><th>${biHtml("max_depth")}</th><td>${escapeHtml(String(data.plan.max_depth_m))} m</td></tr>
-            <tr><th>${biRawHtml("Divers in Group", "Taucher in Gruppe", "Buzos en grupo", "الغواصون في المجموعة")}</th><td>${escapeHtml(String(data.plan.divers_in_group ?? data.divers.length))}</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="card-section-row">
-      <div class="side-label">${biHtml("who")}</div>
-      <div class="section-body">
-        ${whoSections[0] || buildWhoTable([])}
-      </div>
-    </section>
+    ${buildPrimaryCardPage(data, coordsText, whoSections[0] || buildWhoTable([]), exportLanguageCount)}
     ${whoSections
       .slice(1)
-      .map(
-        (tableHtml) => `
-    <section class="card-section-row who-page-break">
-      <div class="side-label">${biRawHtml("Who (cont.)", "Wer (Forts.)", "Quien (cont.)", "من (متابعة)")}</div>
-      <div class="section-body">
-        ${tableHtml}
-      </div>
-    </section>`
-      )
+      .map((tableHtml) => buildContinuationCardPage(tableHtml, exportLanguageCount))
       .join("")}
   `;
-  fitCardHeaderTitle();
+  fitCardPages();
+}
+
+function buildPrimaryCardPage(data, coordsText, whoTableHtml, exportLanguageCount) {
+  return `
+    <section class="card-page card-page-primary lang-count-${exportLanguageCount}">
+      ${buildCardHeader()}
+      <div class="card-page-body">
+        <section class="card-section-row section-where">
+          <div class="side-label">${biHtml("where")}</div>
+          <div class="section-body">
+            ${buildWhereTable(data, coordsText)}
+          </div>
+        </section>
+
+        <section class="card-section-row section-what">
+          <div class="side-label">${biHtml("what")}</div>
+          <div class="section-body">
+            ${buildWhatTable(data)}
+          </div>
+        </section>
+
+        <section class="card-section-row section-who">
+          <div class="side-label">${biHtml("who")}</div>
+          <div class="section-body">
+            ${whoTableHtml}
+          </div>
+        </section>
+      </div>
+    </section>
+  `;
+}
+
+function buildWhereTable(data, coordsText) {
+  const rows = [
+    {
+      key: "local_emergency_number",
+      value: `<strong>${escapeHtml(data.dive_site.local_emergency_number || "-")}</strong>`,
+      className: "row-emergency-number row-emergency-number-top"
+    },
+    { key: "site", value: escapeHtml(data.dive_site.name), className: "row-site" },
+    { key: "address", value: escapeHtml(data.dive_site.address), className: "row-address" },
+    { key: "elevation_m", value: `${escapeHtml(String(data.dive_site.elevation_m))} m`, className: "row-elevation" },
+    { key: "coordinates", value: escapeHtml(coordsText), className: "row-coordinates" },
+    {
+      key: "dive_base_phone",
+      value: renderPhoneQrBlock(data.dive_site.dive_base_phone, {
+        qrType: "tel",
+        alt: "Dive base phone QR",
+        qrPosition: "right",
+        qrAlign: "left",
+        qrGap: "normal"
+      }),
+      className: "row-dive-base-phone"
+    },
+    { key: "dive_base_website", value: escapeHtml(data.dive_site.dive_base_website || "-"), className: "row-dive-base-website" },
+    { key: "oxygen_location", value: escapeHtml(data.dive_site.oxygen_location || "-"), className: "row-oxygen" },
+    { key: "emergency_phone_location", value: escapeHtml(data.dive_site.emergency_phone_location || "-"), className: "row-emergency-phone-location" },
+    { key: "chamber_info", labelKey: "hyperbaric_chamber", value: escapeHtml(data.dive_site.chamber_info || "-"), className: "row-chamber-info" }
+  ];
+  return buildCompactTable(rows, {
+    tableClassName: "data-table compact where-table",
+    renderLabel: (row) => biHtml(row.labelKey || row.key),
+    renderValue: (row) => row.value
+  });
+}
+
+function buildWhatTable(data) {
+  const rows = [
+    { labelHtml: biHtml("plan"), value: escapeHtml(data.plan.summary), className: "row-plan" },
+    { labelHtml: biHtml("max_depth"), value: `${escapeHtml(String(data.plan.max_depth_m))} m`, className: "row-max-depth" },
+    {
+      labelHtml: biRawHtml("Divers in Group", "Taucher in Gruppe", "Buzos en grupo", "الغواصون في المجموعة"),
+      value: escapeHtml(String(data.plan.divers_in_group ?? data.divers.length)),
+      className: "row-divers-in-group"
+    }
+  ];
+  return buildCompactTable(rows, {
+    tableClassName: "data-table compact what-table",
+    renderLabel: (row) => row.labelHtml,
+    renderValue: (row) => row.value
+  });
+}
+
+function buildCompactTable(rows, options) {
+  const safeRows = Array.isArray(rows) ? rows : [];
+  const bodyRows = safeRows
+    .map((row) => {
+      const className = row.className ? ` ${row.className}` : "";
+      return `<tr class="${className.trim()}">
+        <th>${options.renderLabel(row)}</th>
+        <td>${options.renderValue(row)}</td>
+      </tr>`;
+    })
+    .join("");
+  return `
+    <table class="${options.tableClassName}">
+      <tbody>
+        ${bodyRows}
+      </tbody>
+    </table>
+  `;
+}
+
+function buildWeightedTable(rows, options) {
+  const safeRows = Array.isArray(rows) ? rows : [];
+  const totalWeight = safeRows.reduce((sum, row) => sum + (row.weight || 1), 0) || 1;
+  const bodyRows = safeRows
+    .map((row) => {
+      const className = row.className ? ` ${row.className}` : "";
+      return `<tr class="weighted-row${className}" style="--row-weight:${row.weight || 1}">
+        <th>${options.renderLabel(row)}</th>
+        <td>${options.renderValue(row)}</td>
+      </tr>`;
+    })
+    .join("");
+  return `
+    <table class="${options.tableClassName}" style="--row-weight-total:${totalWeight}">
+      <tbody>
+        ${bodyRows}
+      </tbody>
+    </table>
+  `;
+}
+
+function buildContinuationCardPage(tableHtml, exportLanguageCount) {
+  return `
+    <section class="card-page card-page-cont lang-count-${exportLanguageCount}">
+      ${buildCardHeader()}
+      <div class="card-page-body">
+        <section class="card-section-row section-who">
+          <div class="side-label">${biRawHtml("Who (cont.)", "Wer (Forts.)", "Quien (cont.)", "من (متابعة)")}</div>
+          <div class="section-body">
+            ${tableHtml}
+          </div>
+        </section>
+      </div>
+    </section>
+  `;
+}
+
+function buildCardHeader() {
+  return `
+    <div class="card-header">
+      <h3>${biExportText("card_title")}</h3>
+      <p>SafeDiveCard.com</p>
+    </div>
+  `;
 }
 
 function buildWhoSections(divers, pageSize) {
@@ -778,32 +993,40 @@ function buildWhoSections(divers, pageSize) {
 
 function buildWhoTable(divers) {
   const rows = [
-    { labelHtml: biHtml("name"), get: (d) => d.full_name || "-" },
-    { labelHtml: biHtml("address"), get: (d) => d.address || "-" },
-    { labelHtml: biRawHtml("Sex", "Geschlecht", "Sexo", "الجنس"), get: (d) => d.sex || "-" },
-    { labelHtml: biRawHtml("Birth / Age", "Geburtstag / Alter", "Nacimiento / Edad", "الميلاد / العمر"), get: (d) => formatBirthAge(d.birth_date) },
-    { labelHtml: biRawHtml("Dive Count", "Anzahl Tauchgaenge", "Numero de inmersiones", "عدد الغطسات"), get: (d) => String(d.dive_count ?? 0) },
-    { labelHtml: biHtml("certifications"), get: (d) => (d.certifications || []).join(", ") || "-" },
-    { labelHtml: biRawHtml("Breathing Gas", "Atemgas", "Gas respiratorio", "غاز التنفس"), get: (d) => d.breathing_gas || "-" },
-    { labelHtml: biHtml("allergies"), get: (d) => (d.allergies || []).join(", ") || "-" },
-    { labelHtml: biHtml("conditions"), get: (d) => (d.medical?.conditions || []).join(", ") || "-" },
-    { labelHtml: biHtml("medications"), get: (d) => (d.medical?.medications || []).join(", ") || "-" },
-    { labelHtml: biRawHtml("Emergency Contact", "Notfallkontakt", "Contacto de emergencia", "جهة اتصال طارئة"), get: (d) => formatEmergencyContacts(d.emergency_contacts) },
-    { labelHtml: biRawHtml("Health Insurance", "Krankenversicherung", "Seguro de salud", "التامين الصحي"), get: (d) => d.insurance?.health_insurance || "-" },
-    { labelHtml: biRawHtml("Dive Insurance", "Tauchversicherung", "Seguro de buceo", "تامين الغوص"), get: (d) => formatDiveInsurance(d.insurance) },
-    { labelHtml: biRawHtml("Own Phone", "Eigene Rufnummer", "Telefono propio", "رقم الهاتف"), get: (d) => d.phone || "-" }
+    { labelHtml: biHtml("name"), get: (d) => d.full_name || "-", weight: 1.0, className: "row-name" },
+    { labelHtml: biHtml("address"), get: (d) => d.address || "-", weight: 1.55, className: "row-address" },
+    { labelHtml: biRawHtml("Sex", "Geschlecht", "Sexo", "الجنس"), get: (d) => formatSexValue(d.sex), weight: 0.85, className: "row-sex" },
+    { labelHtml: biRawHtml("Birth / Age", "Geburtstag / Alter", "Nacimiento / Edad", "الميلاد / العمر"), get: (d) => formatBirthAge(d.birth_date), weight: 0.95, className: "row-birth-age" },
+    { labelHtml: biRawHtml("Dive Count", "Anzahl Tauchgaenge", "Numero de inmersiones", "عدد الغطسات"), get: (d) => String(d.dive_count ?? 0), weight: 0.9, className: "row-dive-count" },
+    { labelHtml: biHtml("certifications"), get: (d) => (d.certifications || []).join(", ") || "-", weight: 1.35, className: "row-certifications" },
+    { labelHtml: biRawHtml("Breathing Gas", "Atemgas", "Gas respiratorio", "غاز التنفس"), get: (d) => d.breathing_gas || "-", weight: 0.9, className: "row-breathing-gas" },
+    { labelHtml: biHtml("allergies"), get: (d) => (d.allergies || []).join(", ") || "-", weight: 1.0, className: "row-allergies" },
+    { labelHtml: biHtml("conditions"), get: (d) => (d.medical?.conditions || []).join(", ") || "-", weight: 1.15, className: "row-conditions" },
+    { labelHtml: biHtml("medications"), get: (d) => (d.medical?.medications || []).join(", ") || "-", weight: 1.25, className: "row-medications" },
+    { labelHtml: biRawHtml("Emergency Contact", "Notfallkontakt", "Contacto de emergencia", "جهة اتصال طارئة"), getHtml: (d) => formatEmergencyContactsHtml(d.emergency_contacts), weight: 1.6, className: "row-emergency-contact" },
+    { labelHtml: biRawHtml("Health Insurance Provider", "Krankenversicherer", "Proveedor del seguro medico", "مزود التأمين الصحي"), get: (d) => d.insurance?.health_insurance || "-", weight: 1.0, className: "row-health-insurance" },
+    { labelHtml: biRawHtml("Dive Insurance", "Tauchversicherung", "Seguro de buceo", "تامين الغوص"), getHtml: (d) => formatDiveInsuranceHtml(d.insurance), weight: 1.45, className: "row-dive-insurance" },
+    { labelHtml: biRawHtml("Own Phone", "Eigene Rufnummer", "Telefono propio", "رقم الهاتف"), getHtml: (d, idx) => renderOwnPhoneQrBlock(d, idx), weight: 1.2, className: "row-own-phone" }
   ];
 
   const safeDivers = divers.length > 0 ? divers : [createEmptyDiver()];
+  const totalWeight = rows.reduce((sum, row) => sum + (row.weight || 1), 0) || 1;
   const bodyRows = rows
     .map((row) => {
-      const cols = safeDivers.map((diver) => `<td>${escapeHtml(row.get(diver)).replaceAll("\n", "<br>")}</td>`).join("");
-      return `<tr><th>${row.labelHtml}</th>${cols}</tr>`;
+      const cols = safeDivers
+        .map((diver, idx) => {
+          const valueHtml = row.getHtml
+            ? row.getHtml(diver, idx)
+            : escapeHtml(row.get(diver)).replaceAll("\n", "<br>");
+          return `<td>${valueHtml}</td>`;
+        })
+        .join("");
+      return `<tr class="weighted-row ${row.className}" style="--row-weight:${row.weight || 1}"><th>${row.labelHtml}</th>${cols}</tr>`;
     })
     .join("");
 
   return `
-    <table class="data-table who-table">
+    <table class="data-table who-table weighted-table" style="--row-weight-total:${totalWeight}">
       <tbody>
         ${bodyRows}
       </tbody>
@@ -814,8 +1037,60 @@ function buildWhoTable(divers) {
 function formatBirthAge(birthDate) {
   if (!birthDate) return "-";
   const age = calculateAge(birthDate);
-  if (age === null) return birthDate;
-  return `${birthDate} / ${age}`;
+  const formattedDate = formatDateGermanStyle(birthDate);
+  if (age === null) return formattedDate;
+  return `${formattedDate} / ${age} years`;
+}
+
+function formatSexValue(value) {
+  const normalized = String(value || "").toUpperCase();
+  const labelsByCode = {
+    M: { en: "Male", de: "Maennlich", es: "Masculino", fr: "Masculin", it: "Maschile", ar: "ذكر" },
+    F: { en: "Female", de: "Weiblich", es: "Femenino", fr: "Feminin", it: "Femminile", ar: "انثى" },
+    X: { en: "Diverse", de: "Divers", es: "Diverso", fr: "Divers", it: "Diverso", ar: "متنوع" }
+  };
+  const entry = labelsByCode[normalized];
+  if (!entry) return value || "-";
+  return formatLocalizedValue(entry, getExportLanguages());
+}
+
+function formatLocalizedValue(entry, languages) {
+  const labels = [];
+  for (const lang of languages) {
+    const text = entry[lang] || entry.en;
+    if (text && !labels.includes(text)) labels.push(text);
+  }
+  return labels.join(" / ");
+}
+
+function getSexOptions() {
+  return [
+    { value: "M", label: formatLocalizedValue({ en: "Male", de: "Maennlich", es: "Masculino", fr: "Masculin", it: "Maschile", ar: "ذكر" }, getUiLanguages()) },
+    { value: "F", label: formatLocalizedValue({ en: "Female", de: "Weiblich", es: "Femenino", fr: "Feminin", it: "Femminile", ar: "انثى" }, getUiLanguages()) },
+    { value: "X", label: formatLocalizedValue({ en: "Diverse", de: "Divers", es: "Diverso", fr: "Divers", it: "Diverso", ar: "متنوع" }, getUiLanguages()) }
+  ];
+}
+
+function getBreathingGasOptions() {
+  return [
+    ...PRESET_BREATHING_GASES.map((gas) => ({ value: gas, label: gas })),
+    { value: BREATHING_GAS_OTHER_VALUE, label: biRaw("Other...", "Andere...", "Otro...", "اخرى...") }
+  ];
+}
+
+function getBreathingGasChoice(value) {
+  return PRESET_BREATHING_GASES.includes(value) ? value : BREATHING_GAS_OTHER_VALUE;
+}
+
+function toggleBreathingGasOtherField(index, show) {
+  const wrapper = diversContainer.querySelector(`[data-breathing-gas-other-wrapper="${index}"]`);
+  if (!wrapper) return;
+  wrapper.classList.toggle("hidden", !show);
+  const input = wrapper.querySelector('input[data-diver-field="breathing_gas_other"]');
+  if (!input) return;
+  input.disabled = !show;
+  input.required = show;
+  if (!show) input.value = "";
 }
 
 function calculateAge(birthDate) {
@@ -828,11 +1103,45 @@ function calculateAge(birthDate) {
   return age;
 }
 
+function formatDateGermanStyle(value) {
+  const text = String(value || "").trim();
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return text || "-";
+  return `${match[3]}.${match[2]}.${match[1]}`;
+}
+
 function formatEmergencyContacts(contacts) {
-  if (!Array.isArray(contacts) || contacts.length === 0) return "-";
-  return contacts
+  const activeContacts = Array.isArray(contacts)
+    ? contacts.filter((c) => c?.name || c?.relation || c?.phone)
+    : [];
+  if (activeContacts.length === 0) return "-";
+  return activeContacts
     .map((c) => `${c.name || "-"} (${c.relation || "-"})\n${c.phone || "-"}`)
     .join("\n");
+}
+
+function formatEmergencyContactsHtml(contacts) {
+  const activeContacts = Array.isArray(contacts)
+    ? contacts.filter((c) => c?.name || c?.relation || c?.phone)
+    : [];
+  if (activeContacts.length === 0) return "-";
+  const items = activeContacts
+    .map((contact, index) => {
+      const name = String(contact?.name || "").trim() || "-";
+      const relation = String(contact?.relation || "").trim();
+      const phone = String(contact?.phone || "").trim();
+      const firstLine = relation ? `${name} (${relation})` : name;
+      return renderPhoneQrBlock(phone, {
+        qrType: "tel",
+        alt: "Emergency contact phone QR",
+        lines: [firstLine, phone || "-"],
+        qrPosition: index % 2 === 0 ? "left" : "right",
+        qrAlign: index % 2 === 0 ? "left" : "right"
+      });
+    })
+    .filter(Boolean);
+  if (items.length === 0) return "-";
+  return `<div class="qr-stack">${items.join("")}</div>`;
 }
 
 function formatDiveInsurance(insurance) {
@@ -843,6 +1152,117 @@ function formatDiveInsurance(insurance) {
     insurance.dive_insurance_hotline ? `Hotline: ${insurance.dive_insurance_hotline}` : null
   ].filter(Boolean);
   return parts.join("\n");
+}
+
+function formatDiveInsuranceHtml(insurance) {
+  if (!insurance) return "-";
+  const lines = [
+    insurance.dive_insurance_provider || "-",
+    insurance.dive_insurance_member_no ? `No: ${insurance.dive_insurance_member_no}` : null,
+    insurance.dive_insurance_hotline ? `Hotline: ${insurance.dive_insurance_hotline}` : null
+  ].filter(Boolean);
+  return renderInfoWithQr(lines, insurance.dive_insurance_hotline, "Dive insurance hotline QR", "tel", "right", "right", "normal");
+}
+
+function renderOwnPhoneQrBlock(diver, index) {
+  const phone = diver?.phone || "";
+  const vcard = buildDiverVcard(diver, index);
+  return renderPhoneQrBlock(phone, {
+    qrType: "vcard",
+    qrPayload: vcard,
+    alt: `Diver ${index + 1} contact QR`,
+    qrPosition: "left",
+    qrAlign: "left"
+  });
+}
+
+function renderPhoneQrBlock(phone, options = {}) {
+  const displayText = String(phone || "").trim();
+  const lines = Array.isArray(options.lines) && options.lines.length > 0
+    ? options.lines
+    : [displayText || "-"];
+  const qrPosition = options.qrPosition === "left" ? "left" : "right";
+  const qrAlign = options.qrAlign === "right" ? "right" : "left";
+  const qrGap = options.qrGap === "tight" ? "tight" : "normal";
+  if (!displayText && options.qrType !== "vcard") {
+    return renderInfoWithQr(lines, "", options.alt || "Phone", "tel", qrPosition, qrAlign, qrGap);
+  }
+  const qrType = options.qrType || "tel";
+  const qrPayload = qrType === "vcard"
+    ? String(options.qrPayload || "")
+    : buildTelQrPayload(displayText);
+  if (!qrPayload) return renderInfoWithQr(lines, "", options.alt || "Phone", qrType === "vcard" ? "raw" : "tel", qrPosition, qrAlign, qrGap);
+  return renderInfoWithQr(lines, qrPayload, options.alt || "Phone QR", qrType === "vcard" ? "raw" : "tel", qrPosition, qrAlign, qrGap);
+}
+
+function renderInfoWithQr(lines, payloadSource, alt, payloadMode = "tel", qrPosition = "right", qrAlign = "left", qrGap = "normal") {
+  const safeLines = (Array.isArray(lines) ? lines : [lines]).filter((line) => line !== null && line !== undefined && String(line).trim() !== "");
+  if (safeLines.length === 0) return "-";
+  let qrPayload = "";
+  if (payloadMode === "raw") {
+    qrPayload = String(payloadSource || "").trim();
+  } else if (payloadMode === "tel") {
+    qrPayload = buildTelQrPayload(payloadSource);
+  }
+  const textHtml = safeLines.map((line) => `<span>${escapeHtml(String(line))}</span>`).join("");
+  const blockClass = `qr-inline-block qr-pos-${qrPosition} qr-align-${qrAlign} qr-gap-${qrGap}`;
+  if (!qrPayload) {
+    return `<div class="${blockClass}"><div class="qr-inline-text">${textHtml}</div></div>`;
+  }
+  const qrUrl = buildQrImageUrl(qrPayload);
+  return `<div class="${blockClass}">
+    <div class="qr-inline-text">${textHtml}</div>
+    <img class="qr-inline-code" src="${qrUrl}" alt="${escapeHtml(alt)}" loading="lazy">
+  </div>`;
+}
+
+function buildTelQrPayload(phone) {
+  const normalized = normalizePhoneForTel(phone);
+  if (!normalized) return "";
+  return `tel:${normalized}`;
+}
+
+function normalizePhoneForTel(phone) {
+  const raw = String(phone || "").trim();
+  if (!raw) return "";
+  const hasLeadingPlus = raw.startsWith("+");
+  const cleaned = raw.replace(/[^\d+]/g, "");
+  const normalized = hasLeadingPlus
+    ? `+${cleaned.replace(/[+]/g, "")}`
+    : cleaned.replace(/[+]/g, "");
+  const digitCount = normalized.replace(/[^\d]/g, "").length;
+  if (digitCount < 5) return "";
+  if (!/^\+?\d+$/.test(normalized)) return "";
+  return normalized;
+}
+
+function buildDiverVcard(diver, index) {
+  const fullName = String(diver?.full_name || "").trim();
+  const prefixedName = `Diver ${index + 1}${fullName ? ` ${fullName}` : ""}`.trim();
+  const birthDate = String(diver?.birth_date || "").trim();
+  const lines = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    `FN:${escapeVcardValue(prefixedName)}`,
+    `N:${escapeVcardValue(prefixedName)};;;;`,
+    diver?.address ? `ADR:;;${escapeVcardValue(String(diver.address).trim())};;;;` : null,
+    diver?.phone ? `TEL;TYPE=CELL:${escapeVcardValue(String(diver.phone).trim())}` : null,
+    birthDate ? `BDAY:${birthDate}` : null,
+    "END:VCARD"
+  ].filter(Boolean);
+  return lines.join("\n");
+}
+
+function escapeVcardValue(value) {
+  return String(value || "")
+    .replaceAll("\\", "\\\\")
+    .replaceAll(";", "\\;")
+    .replaceAll(",", "\\,")
+    .replaceAll("\n", "\\n");
+}
+
+function buildQrImageUrl(payload) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=96x96&margin=0&data=${encodeURIComponent(payload)}`;
 }
 
 function getField(name) {
@@ -927,6 +1347,25 @@ async function geocodeAddress(address) {
   };
 }
 
+async function fetchApproxElevation(lat, lon) {
+  try {
+    const url =
+      `https://api.open-meteo.com/v1/elevation?latitude=${encodeURIComponent(String(lat))}&longitude=${encodeURIComponent(String(lon))}`;
+    const response = await fetch(url, {
+      headers: { Accept: "application/json" }
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const payload = await response.json();
+    const elevation = toNullableNum(payload?.elevation?.[0] ?? "");
+    if (elevation === null) return null;
+    return Math.round(elevation);
+  } catch {
+    return null;
+  }
+}
+
 function roundTo5(value) {
   return Math.round(value * 100000) / 100000;
 }
@@ -944,7 +1383,7 @@ function showErrorToast(text) {
   window.setTimeout(() => {
     toast.classList.add("toast-hide");
     window.setTimeout(() => toast.remove(), 250);
-  }, 5000);
+  }, TOAST_DURATION_MS);
 }
 
 function renderReadiness(data) {
@@ -1071,6 +1510,25 @@ function getUiLanguages() {
   return langs;
 }
 
+function populateCountryOverrideCountrySelect(continent, selectedCode = "none") {
+  if (!countryOverrideCountrySelect || !countryOverrideCountryField) return;
+  const options = COUNTRY_OVERRIDE_OPTIONS[continent] || [];
+  countryOverrideCountrySelect.innerHTML = [
+    `<option value="none">Select country</option>`,
+    ...options.map((option) => `<option value="${escapeHtml(option.code)}"${option.code === selectedCode ? " selected" : ""}>${escapeHtml(option.label)}</option>`)
+  ].join("");
+  countryOverrideCountryField.classList.toggle("hidden", continent === "none");
+}
+
+function getCountryOverrideContinent(code) {
+  const normalized = String(code || "").toLowerCase();
+  if (!normalized || normalized === "none") return "none";
+  for (const [continent, options] of Object.entries(COUNTRY_OVERRIDE_OPTIONS)) {
+    if (options.some((option) => option.code === normalized)) return continent;
+  }
+  return "none";
+}
+
 function getExportLanguages() {
   const langs = ["en"];
   const local = getEffectiveLocalLanguage();
@@ -1191,13 +1649,20 @@ function normalizeEmergencyContacts(list, name, relation, phone) {
         relation: String(c?.relation || ""),
         phone: String(c?.phone || "")
       }))
-      .filter((c) => c.name || c.relation || c.phone);
-    if (cleaned.length > 0) return cleaned;
+      .filter((c) => c.name || c.relation || c.phone)
+      .slice(0, 2);
+    if (cleaned.length > 0) {
+      while (cleaned.length < 2) cleaned.push(createEmptyEmergencyContact());
+      return cleaned;
+    }
   }
   if (name || relation || phone) {
-    return [{ name: String(name || ""), relation: String(relation || ""), phone: String(phone || "") }];
+    return [
+      { name: String(name || ""), relation: String(relation || ""), phone: String(phone || "") },
+      createEmptyEmergencyContact()
+    ];
   }
-  return [{ name: "", relation: "", phone: "" }];
+  return [createEmptyEmergencyContact(), createEmptyEmergencyContact()];
 }
 
 function isDiverEffectivelyEmpty(diver) {
@@ -1308,8 +1773,58 @@ function syncHeaderLogoHeight() {
   toolBrandLogoEl.style.height = `${Math.round(h * 1.2)}px`;
 }
 
-function fitCardHeaderTitle() {
-  const titleEl = cardEl.querySelector(".card-header h3");
+function fitCardPages() {
+  const pages = [...cardEl.querySelectorAll(".card-page")];
+  for (const pageEl of pages) {
+    fitSingleCardPage(pageEl);
+  }
+}
+
+function fitSingleCardPage(pageEl) {
+  if (!pageEl) return;
+  const minScale = pageEl.classList.contains("card-page-cont") ? 0.62 : 0.58;
+  const maxScale = pageEl.classList.contains("card-page-cont") ? 1.3 : 1.45;
+  let low = minScale;
+  let high = maxScale;
+  let best = minScale;
+
+  while ((high - low) > 0.01) {
+    const mid = (low + high) / 2;
+    if (cardPageFits(pageEl, mid)) {
+      best = mid;
+      low = mid;
+    } else {
+      high = mid;
+    }
+  }
+
+  pageEl.style.setProperty("--page-scale", best.toFixed(3));
+  fitCardHeaderTitle(pageEl);
+}
+
+function cardPageFits(pageEl, scale) {
+  pageEl.style.setProperty("--page-scale", scale.toFixed(3));
+  fitCardHeaderTitle(pageEl);
+  return pageEl.scrollHeight <= (pageEl.clientHeight + 1) &&
+    pageEl.scrollWidth <= (pageEl.clientWidth + 1) &&
+    !pageHasClippedContent(pageEl);
+}
+
+function pageHasClippedContent(pageEl) {
+  const boxes = pageEl.querySelectorAll(
+    ".card-page-body, .card-section-row, .section-body, .card-header h3, .side-label, .data-table, .data-table th, .data-table td"
+  );
+  for (const box of boxes) {
+    if (!box.clientHeight || !box.clientWidth) continue;
+    if (box.scrollHeight > (box.clientHeight + 1) || box.scrollWidth > (box.clientWidth + 1)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function fitCardHeaderTitle(pageEl) {
+  const titleEl = pageEl?.querySelector(".card-header h3");
   if (!titleEl) return;
   titleEl.style.fontSize = "";
   const min = 10;
