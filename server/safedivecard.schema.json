@@ -1,0 +1,318 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://safedivecard.app/schema/safedivecard.schema.json",
+  "title": "SafeDiveCard Data",
+  "type": "object",
+  "required": [
+    "meta",
+    "dive_site",
+    "plan",
+    "divers"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "meta": {
+      "type": "object",
+      "required": [
+        "version",
+        "language",
+        "auto_local_language",
+        "optional_extra_language",
+        "country_override_code",
+        "created_at"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "type": "string",
+          "const": "1.0"
+        },
+        "language": {
+          "type": "string",
+          "const": "en"
+        },
+        "auto_local_language": {
+          "type": "string",
+          "enum": [
+            "none",
+            "de",
+            "es",
+            "fr",
+            "it",
+            "pt",
+            "nl",
+            "pl",
+            "ar"
+          ]
+        },
+        "optional_extra_language": {
+          "type": "string",
+          "enum": [
+            "none",
+            "de",
+            "es",
+            "fr",
+            "it",
+            "pt",
+            "nl",
+            "pl",
+            "ar"
+          ]
+        },
+        "country_override_code": {
+          "type": "string",
+          "enum": [
+            "none",
+            "de",
+            "eg",
+            "es",
+            "fr",
+            "it",
+            "pt",
+            "nl",
+            "pl",
+            "sa",
+            "ae",
+            "ma",
+            "tn",
+            "dz"
+          ]
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date"
+        }
+      }
+    },
+    "dive_site": {
+      "type": "object",
+      "required": [
+        "name",
+        "address",
+        "elevation_m"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "address": {
+          "type": "string",
+          "minLength": 1
+        },
+        "elevation_m": {
+          "type": "number"
+        },
+        "country_code": {
+          "type": "string",
+          "pattern": "^[a-z]{2}$"
+        },
+        "dive_base_name": {
+          "type": "string"
+        },
+        "dive_base_phone": {
+          "type": "string"
+        },
+        "dive_base_website": {
+          "type": "string"
+        },
+        "oxygen_location": {
+          "type": "string"
+        },
+        "emergency_phone_location": {
+          "type": "string"
+        },
+        "chamber_info": {
+          "type": "string"
+        },
+        "coordinates": {
+          "type": "object",
+          "required": [
+            "lat",
+            "lon"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "lat": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            "lon": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            }
+          }
+        }
+      }
+    },
+    "plan": {
+      "type": "object",
+      "required": [
+        "summary",
+        "max_depth_m",
+        "divers_in_group"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "max_depth_m": {
+          "type": "number",
+          "minimum": 0
+        },
+        "divers_in_group": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "divers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "full_name",
+          "sex",
+          "birth_date",
+          "address",
+          "dive_count",
+          "certifications",
+          "breathing_gas",
+          "medical",
+          "insurance",
+          "emergency_contacts",
+          "phone"
+        ],
+        "additionalProperties": false,
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sex": {
+            "type": "string",
+            "enum": [
+              "M",
+              "F",
+              "X"
+            ]
+          },
+          "birth_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "address": {
+            "type": "string",
+            "minLength": 1
+          },
+          "dive_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "certifications": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          },
+          "breathing_gas": {
+            "type": "string",
+            "minLength": 1
+          },
+          "allergies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "medical": {
+            "type": "object",
+            "required": [
+              "conditions",
+              "medications"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "conditions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              },
+              "medications": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "default": []
+              }
+            }
+          },
+          "insurance": {
+            "type": "object",
+            "required": [
+              "health_insurance"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "health_insurance": {
+                "type": "string",
+                "minLength": 1
+              },
+              "dive_insurance_provider": {
+                "type": "string"
+              },
+              "dive_insurance_member_no": {
+                "type": "string"
+              },
+              "dive_insurance_hotline": {
+                "type": "string"
+              }
+            }
+          },
+          "emergency_contacts": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "relation",
+                "phone"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "relation": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "phone": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            }
+          },
+          "phone": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

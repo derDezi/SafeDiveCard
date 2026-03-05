@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SafeDiveCard</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="tool-brand" id="toolBrand">
+      <img src="assets/Header.png" alt="SafeDiveCard Header Logo" class="tool-brand-logo" id="toolBrandLogo">
+      <div class="tool-title-group" id="toolTitleGroup">
+        <h1>SafeDiveCard</h1>
+        <p data-i18n-key="header_subtitle">Create an emergency dive card for a safe dive.</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="panel">
+      <div class="panel-head">
+        <h2 data-i18n-key="input_title">Input</h2>
+        <div class="toolbar action-toolbar">
+          <label class="button-like import-btn">
+            <span data-i18n-key="btn_import_json">Load Dive Data</span>
+            <input id="jsonFileInput" type="file" accept="application/json" hidden>
+          </label>
+          <button id="downloadJsonBtn" class="save-btn" type="button" data-i18n-key="btn_export_json">Save Dive Data</button>
+        </div>
+      </div>
+
+      <fieldset class="lang-block step-section language-section">
+        <legend>Languages</legend>
+        <div class="language-grid">
+          <div class="language-field">
+            <label for="countryOverrideCode">Dive site local language (auto by dive site country, optional override)</label>
+            <select id="countryOverrideCode">
+              <option value="none">No override (use auto local)</option>
+              <option value="de">🇩🇪 Germany (DE)</option>
+              <option value="eg">🇪🇬 Egypt (EG)</option>
+              <option value="es">🇪🇸 Spain (ES)</option>
+              <option value="fr">🇫🇷 France (FR)</option>
+              <option value="it">🇮🇹 Italy (IT)</option>
+              <option value="pt">🇵🇹 Portugal (PT)</option>
+              <option value="nl">🇳🇱 Netherlands (NL)</option>
+              <option value="pl">🇵🇱 Poland (PL)</option>
+              <option value="sa">🇸🇦 Saudi Arabia (SA)</option>
+              <option value="ae">🇦🇪 United Arab Emirates (AE)</option>
+              <option value="ma">🇲🇦 Morocco (MA)</option>
+              <option value="tn">🇹🇳 Tunisia (TN)</option>
+              <option value="dz">🇩🇿 Algeria (DZ)</option>
+            </select>
+          </div>
+          <div class="language-field">
+            <label for="optionalExtraLanguage">Display language / optional extra language</label>
+            <select id="optionalExtraLanguage">
+              <option value="none">None</option>
+              <option value="de">🇩🇪 Deutsch</option>
+              <option value="es">🇪🇸 Espanol</option>
+              <option value="fr">🇫🇷 Francais</option>
+              <option value="it">🇮🇹 Italiano</option>
+              <option value="pt">🇵🇹 Portugues</option>
+              <option value="nl">🇳🇱 Nederlands</option>
+              <option value="pl">🇵🇱 Polski</option>
+              <option value="ar">🇸🇦 Arabic</option>
+            </select>
+          </div>
+        </div>
+      </fieldset>
+
+      <form id="form">
+        <fieldset class="step-section">
+          <legend data-i18n-key="dive_site">Dive Site</legend>
+          <div class="toolbar section-tools">
+            <label class="button-like import-btn">
+              <span>Load Dive Site Data</span>
+              <input id="diveSiteFileInput" type="file" accept="application/json" hidden>
+            </label>
+            <button id="downloadDiveSiteBtn" class="save-btn" type="button">Save Dive Site Data</button>
+          </div>
+          <label><span data-i18n-key="name">Name</span> <input name="dive_site.name" required></label>
+          <label>
+            <span data-i18n-key="address">Address</span>
+            <div class="address-row">
+              <input name="dive_site.address" required>
+              <button id="locateAddressBtn" type="button" data-i18n-key="btn_locate_address">Locate Address</button>
+            </div>
+          </label>
+          <label><span data-i18n-key="elevation_m">Elevation (m)</span> <input name="dive_site.elevation_m" type="number" step="0.1" required></label>
+          <label><span data-i18n-key="latitude_decimal">Latitude (decimal)</span> <input name="dive_site.lat" type="number" step="0.000001" min="-90" max="90"></label>
+          <label><span data-i18n-key="longitude_decimal">Longitude (decimal)</span> <input name="dive_site.lon" type="number" step="0.000001" min="-180" max="180"></label>
+          <p class="small-note">Latitude/Longitude can be auto-filled via Locate Address.</p>
+          <label><span data-i18n-key="dive_base_phone">Dive Base Phone</span> <input name="dive_site.dive_base_phone"></label>
+          <label><span data-i18n-key="dive_base_website">Dive Base Website</span> <input name="dive_site.dive_base_website"></label>
+          <label><span data-i18n-key="oxygen_location">Oxygen Location</span> <input name="dive_site.oxygen_location"></label>
+          <label><span data-i18n-key="local_emergency_number">Local Emergency Number</span> <input name="dive_site.local_emergency_number"></label>
+          <label><span data-i18n-key="emergency_phone_location">Emergency Phone Location</span> <input name="dive_site.emergency_phone_location"></label>
+          <label><span data-i18n-key="chamber_info">Chamber Info</span> <input name="dive_site.chamber_info"></label>
+        </fieldset>
+
+        <fieldset class="step-section">
+          <legend data-i18n-key="dive_plan">Dive Plan</legend>
+          <label><span data-i18n-key="summary">Summary</span> <input name="plan.summary" required></label>
+          <label><span data-i18n-key="max_depth_m">Max Depth (m)</span> <input name="plan.max_depth_m" type="number" step="0.1" required></label>
+          <label>Divers in Group <input name="plan.divers_in_group" type="number" min="1" step="1" required></label>
+        </fieldset>
+
+        <fieldset class="step-section">
+          <legend data-i18n-key="divers">Divers</legend>
+          <div id="diversContainer"></div>
+          <div class="toolbar diver-toolbar">
+            <label class="button-like import-btn">
+              <span>Load Diver Data</span>
+              <input id="diverFileInput" type="file" accept="application/json" hidden>
+            </label>
+            <button id="addDiverBtn" type="button" data-i18n-key="btn_add_diver">Add Diver</button>
+          </div>
+        </fieldset>
+      </form>
+    </section>
+
+    <section class="preview-wrap">
+      <section class="panel map-preview-panel">
+        <h2>Map</h2>
+        <div id="mapPreview"></div>
+      </section>
+      <section class="panel export-panel">
+        <h2>Export</h2>
+        <div class="export-grid">
+          <div id="exportActions" class="export-actions">
+            <button id="printBtn" type="button" class="export-btn" data-i18n-key="btn_export_pdf">Export PDF</button>
+          </div>
+          <div class="export-info">
+            <p class="export-warning">Make sure to send a digital copy of this PDF to your dive buddies via email or WhatsApp before the dive.</p>
+          </div>
+        </div>
+      </section>
+      <section class="panel card-preview-panel">
+        <h2 data-i18n-key="card_preview">Card Preview</h2>
+        <div class="a4-frame">
+          <article id="card" class="card"></article>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <section class="panel site-status">
+    <h2>Status</h2>
+    <p id="autoLocalInfo" class="small-note">EN + Local (auto): not resolved yet. Use "Locate Address".</p>
+    <p id="langSupportNote" class="small-note">Auto local + optional extra are shown where translations are available.</p>
+    <p id="status" class="status">Ready.</p>
+  </section>
+
+  <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
