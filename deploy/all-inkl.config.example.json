@@ -1,0 +1,9 @@
+{
+  "protocol": "ftps",
+  "host": "ftpdeinserver.all-inkl.com",
+  "port": 21,
+  "username": "dein-benutzername",
+  "password": "dein-passwort",
+  "remotePath": "/www/htdocs/dein-zielordner/",
+  "localPath": "server"
+}

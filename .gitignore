@@ -1,1 +1,3 @@
 project/samples/
+deploy/*.json
+!deploy/*.example.json

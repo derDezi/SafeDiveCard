@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SafeDiveCard</title>
+  <link rel="icon" type="image/svg+xml" href="assets/favicon-mask.svg">
   <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -66,7 +67,7 @@
       </fieldset>
 
       <form id="form">
-        <fieldset class="step-section">
+        <fieldset class="step-section section-with-tools">
           <legend data-i18n-key="dive_site">Dive Site</legend>
           <div class="toolbar section-tools">
             <label class="button-like import-btn">
@@ -102,7 +103,7 @@
           <label>Divers in Group <input name="plan.divers_in_group" type="number" min="1" step="1" required></label>
         </fieldset>
 
-        <fieldset class="step-section">
+        <fieldset class="step-section section-with-tools">
           <legend data-i18n-key="divers">Divers</legend>
           <div id="diversContainer"></div>
           <div class="toolbar diver-toolbar">
@@ -140,6 +141,13 @@
       </section>
     </section>
   </main>
+
+  <section class="panel site-info">
+    <h2>About SafeDiveCard</h2>
+    <p>SafeDiveCard helps divers create a structured emergency card with dive site, dive plan and diver information for safer dive coordination. The project is operated by Timo Schmitt.</p>
+    <p>You can reach me at <a href="mailto:safedivecard@it-schmitt.de">safedivecard@it-schmitt.de</a>. I appreciate every idea for improvement and I am also happy about friendly conversations around diving and the project.</p>
+    <p>The source code is available on GitHub: <a href="https://github.com/derDezi/SafeDiveCard" target="_blank" rel="noreferrer">github.com/derDezi/SafeDiveCard</a>.</p>
+  </section>
 
   <section class="panel site-status">
     <h2>Status</h2>
