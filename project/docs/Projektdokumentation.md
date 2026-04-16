@@ -1,5 +1,8 @@
 # EmergencyCardDiving - Projektdokumentation
 
+## Merker / offene Idee
+- Das mobile Design sollte grundlegend ueberarbeitet werden. Der aktuelle Fokus lag bisher auf Desktop und A4-Export.
+
 ## Zweck
 Dieses Dokument sammelt alle gemeinsam erarbeiteten Inhalte:
 - Konzepte
