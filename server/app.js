@@ -14,6 +14,7 @@ const downloadDiveSiteBtn = document.getElementById("downloadDiveSiteBtn");
 const diverFileInput = document.getElementById("diverFileInput");
 const printBtn = document.getElementById("printBtn");
 const locateAddressBtn = document.getElementById("locateAddressBtn");
+const clearDiveSiteLookupBtn = document.getElementById("clearDiveSiteLookupBtn");
 const addDiverBtn = document.getElementById("addDiverBtn");
 const diversContainer = document.getElementById("diversContainer");
 const optionalExtraLanguageSelect = document.getElementById("optionalExtraLanguage");
@@ -23,6 +24,7 @@ const countryOverrideCountryField = document.getElementById("countryOverrideCoun
 const countryOverrideCountrySelect = document.getElementById("countryOverrideCountry");
 const langSupportNote = document.getElementById("langSupportNote");
 const toastContainer = document.getElementById("toastContainer");
+const altitudeDiveNote = document.getElementById("altitudeDiveNote");
 const decoBeerModal = document.getElementById("decoBeerModal");
 const decoBeerCloseBtn = document.getElementById("decoBeerCloseBtn");
 const TOAST_DURATION_MS = 10000;
@@ -30,6 +32,7 @@ const BREATHING_GAS_OTHER_VALUE = "__other__";
 const PRESET_BREATHING_GASES = ["Air", "EAN32 (Nitrox 32)", "EAN36 (Nitrox 36)", "EAN40 (Nitrox 40)"];
 let shouldOpenDecoBeerModalAfterPrint = false;
 let previousDocumentTitle = document.title;
+let mapPreviewDiveSite = null;
 const COUNTRY_OVERRIDE_OPTIONS = {
   europe: [
     { code: "de", label: "Germany (DE)" },
@@ -309,6 +312,7 @@ const I18N = {
 hydrateFormFromState(state);
 renderDiversInputs(state.divers);
 renderStaticI18n();
+syncMapPreviewFromDiveSite(state.dive_site);
 renderCard(state);
 renderReadiness(state);
 updateLanguageUiState();
@@ -428,6 +432,7 @@ fileInput.addEventListener("change", async (event) => {
     loadStateFromData(state, data);
     hydrateFormFromState(state);
     renderDiversInputs(state.divers);
+    syncMapPreviewFromDiveSite(state.dive_site);
     renderCard(state);
     renderReadiness(state);
     updateLanguageUiState();
@@ -468,19 +473,40 @@ printBtn.addEventListener("click", () => {
   }, 1500);
 });
 
-locateAddressBtn.addEventListener("click", async () => {
+locateAddressBtn.addEventListener("click", runLocateAddressLookup);
+
+for (const fieldName of ["dive_site.name", "dive_site.address"]) {
+  const input = form.elements.namedItem(fieldName);
+  input?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    runLocateAddressLookup();
+  });
+}
+
+async function runLocateAddressLookup() {
+  const freeName = getField("dive_site.name");
   const address = getField("dive_site.address");
-  if (!address) {
-    showErrorToast("Please provide an address first.");
+  const lookupQueries = buildDiveSiteLookupQueries(freeName, address);
+  if (lookupQueries.length === 0) {
+    showErrorToast("Please provide a dive site name or address first.");
     return;
   }
   setStatus("Resolving address...");
   try {
-    const coords = await geocodeAddress(address);
+    const coords = await geocodeDiveSite(lookupQueries);
     if (!coords) {
-      showErrorToast("No coordinates found for this address.");
+      showErrorToast("No coordinates found for this address. Try a different spelling or a more specific wording.");
       return;
     }
+    if (coords.resolvedName) {
+      setField("dive_site.name", coords.resolvedName);
+    }
+    if (coords.resolvedAddress) {
+      setField("dive_site.address", coords.resolvedAddress);
+    }
+    setField("dive_site.dive_base_phone", coords.diveBasePhone || "");
+    setField("dive_site.dive_base_website", coords.diveBaseWebsite || "");
     setField("dive_site.lat", coords.lat.toFixed(5));
     setField("dive_site.lon", coords.lon.toFixed(5));
     state.dive_site.country_code = coords.countryCode || null;
@@ -492,14 +518,35 @@ locateAddressBtn.addEventListener("click", async () => {
       setField("dive_site.elevation_m", String(elevationM));
     }
     readFormIntoState(state);
+    syncMapPreviewFromDiveSite(state.dive_site);
     renderCard(state);
     renderReadiness(state);
     updateLanguageUiState();
     const elevationText = elevationM !== null ? ` | Elevation: ~${elevationM} m` : "";
-    setStatus(`Address resolved: ${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)}${elevationText}`);
+    const nameText = coords.resolvedName ? ` | Name: ${coords.resolvedName}` : "";
+    setStatus(`Address resolved: ${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)}${elevationText}${nameText}`);
   } catch (err) {
     showErrorToast(`Address lookup failed: ${err.message}`);
   }
+}
+
+clearDiveSiteLookupBtn.addEventListener("click", () => {
+  setField("dive_site.name", "");
+  setField("dive_site.address", "");
+  setField("dive_site.lat", "");
+  setField("dive_site.lon", "");
+  setField("dive_site.elevation_m", "");
+  setField("dive_site.dive_base_phone", "");
+  setField("dive_site.dive_base_website", "");
+  setField("dive_site.local_emergency_number", "");
+  state.dive_site.country_code = null;
+  state.meta.auto_local_language = "none";
+  readFormIntoState(state);
+  syncMapPreviewFromDiveSite(state.dive_site);
+  renderCard(state);
+  renderReadiness(state);
+  updateLanguageUiState();
+  setStatus("Dive site lookup fields cleared.");
 });
 
 diveSiteFileInput.addEventListener("change", async (event) => {
@@ -512,6 +559,7 @@ diveSiteFileInput.addEventListener("change", async (event) => {
     state.dive_site = normalizeDiveSite(diveSite);
     state.meta.auto_local_language = resolveLocalLanguage(state.dive_site.country_code);
     hydrateFormFromState(state);
+    syncMapPreviewFromDiveSite(state.dive_site);
     renderCard(state);
     renderReadiness(state);
     updateLanguageUiState();
@@ -852,10 +900,9 @@ function readFormIntoState(data) {
 
 function renderCard(data) {
   const coordsText = formatCoordinates(data.dive_site.coordinates);
-  const mapHtml = buildMapHtml(data.dive_site);
   const whoSections = buildWhoSections(data.divers, 2);
   const exportLanguageCount = getExportLanguages().length;
-  mapPreviewEl.innerHTML = mapHtml;
+  renderMapPreview();
 
   cardEl.innerHTML = `
     ${buildPrimaryCardPage(data, coordsText, whoSections[0] || buildWhoTable([]), exportLanguageCount)}
@@ -865,6 +912,20 @@ function renderCard(data) {
       .join("")}
   `;
   fitCardPages();
+}
+
+function renderMapPreview() {
+  mapPreviewEl.innerHTML = buildMapHtml(mapPreviewDiveSite);
+}
+
+function syncMapPreviewFromDiveSite(diveSite) {
+  const normalized = normalizeDiveSite(diveSite || {});
+  const hasCoords = normalized.coordinates && typeof normalized.coordinates.lat === "number" && typeof normalized.coordinates.lon === "number";
+  if (!normalized.address && !hasCoords) {
+    mapPreviewDiveSite = null;
+    return;
+  }
+  mapPreviewDiveSite = normalized;
 }
 
 function buildPrimaryCardPage(data, coordsText, whoTableHtml, exportLanguageCount) {
@@ -906,7 +967,11 @@ function buildWhereTable(data, coordsText) {
     },
     { key: "site", value: escapeHtml(data.dive_site.name), className: "row-site" },
     { key: "address", value: escapeHtml(data.dive_site.address), className: "row-address" },
-    { key: "elevation_m", value: `${escapeHtml(String(data.dive_site.elevation_m))} m`, className: "row-elevation" },
+    {
+      key: "elevation_m",
+      value: formatElevationForExport(data.dive_site.elevation_m),
+      className: "row-elevation"
+    },
     { key: "coordinates", value: escapeHtml(coordsText), className: "row-coordinates" },
     {
       key: "dive_base_phone",
@@ -1357,9 +1422,84 @@ function buildBbox(lat, lon, pad) {
   return `${minLon},${minLat},${maxLon},${maxLat}`;
 }
 
+function buildDiveSiteLookupQueries(name, address) {
+  const safeName = String(name || "").trim();
+  const safeAddress = String(address || "").trim();
+  const queries = [];
+
+  const addQuery = (query) => {
+    const text = String(query || "").trim();
+    if (!text) return;
+    if (!queries.some((item) => item.toLowerCase() === text.toLowerCase())) {
+      queries.push(text);
+    }
+  };
+
+  if (safeName && safeAddress) {
+    addQuery(`${safeName}, ${safeAddress}`);
+  }
+  addQuery(safeName);
+  addQuery(safeAddress);
+
+  for (const variant of buildJoinedWordVariants(safeAddress)) {
+    if (safeName) {
+      addQuery(`${safeName}, ${variant}`);
+    }
+    addQuery(variant);
+  }
+
+  for (const variant of buildJoinedWordVariants(safeName)) {
+    if (safeAddress) {
+      addQuery(`${variant}, ${safeAddress}`);
+    }
+    addQuery(variant);
+  }
+
+  return queries.slice(0, 5);
+}
+
+function formatElevationForExport(elevationM) {
+  const elevation = toNullableNum(elevationM);
+  if (elevation === null) return "-";
+  const base = `${escapeHtml(String(elevationM))} m`;
+  if (elevation > 300) {
+    return `${base} <strong>| Altitude Dive!</strong>`;
+  }
+  return base;
+}
+
+async function geocodeDiveSite(queries) {
+  for (const query of queries) {
+    const result = await geocodeAddress(query);
+    if (result) return result;
+  }
+  return null;
+}
+
+function buildJoinedWordVariants(text) {
+  const tokens = String(text || "").trim().split(/\s+/).filter(Boolean);
+  if (tokens.length < 2) return [];
+
+  const variants = [];
+  for (let index = 0; index < tokens.length - 1; index += 1) {
+    const merged = tokens
+      .map((token, tokenIndex) => {
+        if (tokenIndex === index) return `${token}${tokens[tokenIndex + 1]}`;
+        if (tokenIndex === index + 1) return null;
+        return token;
+      })
+      .filter(Boolean)
+      .join(" ");
+    variants.push(merged);
+  }
+
+  variants.push(tokens.join(""));
+  return uniquePreserveOrder(variants);
+}
+
 async function geocodeAddress(address) {
   const url =
-    `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=1&q=${encodeURIComponent(address)}`;
+    `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&addressdetails=1&namedetails=1&extratags=1&q=${encodeURIComponent(address)}`;
   const response = await fetch(url, {
     headers: { Accept: "application/json" }
   });
@@ -1368,15 +1508,102 @@ async function geocodeAddress(address) {
   }
   const results = await response.json();
   if (!Array.isArray(results) || results.length === 0) return null;
-  const lat = toNullableNum(results[0].lat);
-  const lon = toNullableNum(results[0].lon);
-  const countryCode = (results[0].address?.country_code || "").toLowerCase() || null;
+  const result = results[0];
+  const lat = toNullableNum(result.lat);
+  const lon = toNullableNum(result.lon);
+  const countryCode = (result.address?.country_code || "").toLowerCase() || null;
+  const extraTags = result.extratags || {};
   if (lat === null || lon === null) return null;
   return {
     lat: roundTo5(lat),
     lon: roundTo5(lon),
-    countryCode
+    countryCode,
+    resolvedName: extractResolvedPlaceName(result),
+    resolvedAddress: extractResolvedAddress(result),
+    diveBasePhone: extractContactValue(extraTags, ["contact:phone", "phone"]),
+    diveBaseWebsite: extractContactValue(extraTags, ["contact:website", "website", "url"])
   };
+}
+
+function extractContactValue(extraTags, keys) {
+  for (const key of keys) {
+    const value = String(extraTags?.[key] || "").trim();
+    if (value) return value;
+  }
+  return "";
+}
+
+function extractResolvedPlaceName(result) {
+  const candidates = [
+    result?.namedetails?.name,
+    result?.namedetails?.official_name,
+    result?.namedetails?.brand,
+    result?.namedetails?.operator,
+    result?.name,
+    result?.address?.attraction,
+    result?.address?.tourism,
+    result?.address?.leisure,
+    result?.address?.amenity,
+    result?.address?.shop,
+    result?.address?.building
+  ];
+
+  for (const candidate of candidates) {
+    const text = String(candidate || "").trim();
+    if (text) return text;
+  }
+
+  return "";
+}
+
+function extractResolvedAddress(result) {
+  const placeName = extractResolvedPlaceName(result).toLowerCase();
+  const address = result?.address || {};
+  const parts = [
+    joinStreetAddress(address),
+    address.postcode,
+    address.city || address.town || address.village || address.municipality || address.hamlet,
+    address.state,
+    address.country
+  ]
+    .map((part) => String(part || "").trim())
+    .filter(Boolean)
+    .filter((part) => part.toLowerCase() !== placeName);
+
+  const compact = uniquePreserveOrder(parts).join(", ");
+  if (compact) return compact;
+
+  const fallback = String(result?.display_name || "").trim();
+  if (!fallback) return "";
+
+  if (!placeName) return fallback;
+  const fallbackParts = fallback
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .filter((part) => part.toLowerCase() !== placeName);
+  return uniquePreserveOrder(fallbackParts).join(", ");
+}
+
+function joinStreetAddress(address) {
+  const number = String(address?.house_number || "").trim();
+  const street = String(address?.road || address?.pedestrian || address?.footway || address?.path || "").trim();
+  if (street && number) return `${street} ${number}`;
+  return street || number;
+}
+
+function uniquePreserveOrder(items) {
+  const seen = new Set();
+  const result = [];
+  for (const item of items) {
+    const normalized = String(item || "").trim();
+    if (!normalized) continue;
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(normalized);
+  }
+  return result;
 }
 
 async function fetchApproxElevation(lat, lon) {
@@ -1419,7 +1646,9 @@ function showErrorToast(text) {
 }
 
 function renderReadiness(data) {
-  void data;
+  const elevation = toNullableNum(data?.dive_site?.elevation_m ?? "");
+  const isAltitudeDive = elevation !== null && elevation > 300;
+  altitudeDiveNote.classList.toggle("hidden", !isAltitudeDive);
 }
 
 function updateLanguageUiState() {

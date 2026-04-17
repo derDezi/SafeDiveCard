@@ -82,9 +82,11 @@
             <div class="address-row">
               <input name="dive_site.address" required>
               <button id="locateAddressBtn" type="button" data-i18n-key="btn_locate_address">Locate Address</button>
+              <button id="clearDiveSiteLookupBtn" type="button">Clear</button>
             </div>
           </label>
           <label><span data-i18n-key="elevation_m">Elevation (m)</span> <input name="dive_site.elevation_m" type="number" step="0.1" required></label>
+          <p id="altitudeDiveNote" class="small-note hidden">Above 300 m this is considered an altitude dive. Use altitude dive deco tables and make sure your dive computer is set accordingly.</p>
           <label><span data-i18n-key="latitude_decimal">Latitude (decimal)</span> <input name="dive_site.lat" type="number" step="0.000001" min="-90" max="90"></label>
           <label><span data-i18n-key="longitude_decimal">Longitude (decimal)</span> <input name="dive_site.lon" type="number" step="0.000001" min="-180" max="180"></label>
           <p class="small-note">Latitude/Longitude and rough elevation can be auto-filled via Locate Address.</p>

@@ -303,9 +303,15 @@ select {
 
 .address-row {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   gap: 8px;
   align-items: center;
+}
+
+#clearDiveSiteLookupBtn {
+  min-width: 72px;
+  padding: 8px 10px;
+  background: #0e3a4e;
 }
 
 .inline-check {
