@@ -33,6 +33,7 @@ const PRESET_BREATHING_GASES = ["Air", "EAN32 (Nitrox 32)", "EAN36 (Nitrox 36)",
 let shouldOpenDecoBeerModalAfterPrint = false;
 let previousDocumentTitle = document.title;
 let mapPreviewDiveSite = null;
+let shouldClearInitialDiveSiteAddress = false;
 const COUNTRY_OVERRIDE_OPTIONS = {
   europe: [
     { code: "de", label: "Germany (DE)" },
@@ -313,6 +314,8 @@ hydrateFormFromState(state);
 renderDiversInputs(state.divers);
 renderStaticI18n();
 syncMapPreviewFromDiveSite(state.dive_site);
+renderMapPreview();
+clearInitialDiveSiteAddressAfterBootstrap();
 renderCard(state);
 renderReadiness(state);
 updateLanguageUiState();
@@ -433,6 +436,7 @@ fileInput.addEventListener("change", async (event) => {
     hydrateFormFromState(state);
     renderDiversInputs(state.divers);
     syncMapPreviewFromDiveSite(state.dive_site);
+    renderMapPreview();
     renderCard(state);
     renderReadiness(state);
     updateLanguageUiState();
@@ -519,6 +523,7 @@ async function runLocateAddressLookup() {
     }
     readFormIntoState(state);
     syncMapPreviewFromDiveSite(state.dive_site);
+    renderMapPreview();
     renderCard(state);
     renderReadiness(state);
     updateLanguageUiState();
@@ -542,7 +547,6 @@ clearDiveSiteLookupBtn.addEventListener("click", () => {
   state.dive_site.country_code = null;
   state.meta.auto_local_language = "none";
   readFormIntoState(state);
-  syncMapPreviewFromDiveSite(state.dive_site);
   renderCard(state);
   renderReadiness(state);
   updateLanguageUiState();
@@ -560,6 +564,7 @@ diveSiteFileInput.addEventListener("change", async (event) => {
     state.meta.auto_local_language = resolveLocalLanguage(state.dive_site.country_code);
     hydrateFormFromState(state);
     syncMapPreviewFromDiveSite(state.dive_site);
+    renderMapPreview();
     renderCard(state);
     renderReadiness(state);
     updateLanguageUiState();
@@ -902,7 +907,6 @@ function renderCard(data) {
   const coordsText = formatCoordinates(data.dive_site.coordinates);
   const whoSections = buildWhoSections(data.divers, 2);
   const exportLanguageCount = getExportLanguages().length;
-  renderMapPreview();
 
   cardEl.innerHTML = `
     ${buildPrimaryCardPage(data, coordsText, whoSections[0] || buildWhoTable([]), exportLanguageCount)}
@@ -915,7 +919,7 @@ function renderCard(data) {
 }
 
 function renderMapPreview() {
-  mapPreviewEl.innerHTML = buildMapHtml(mapPreviewDiveSite);
+  mapPreviewEl.innerHTML = buildMapHtml(mapPreviewDiveSite || {});
 }
 
 function syncMapPreviewFromDiveSite(diveSite) {
@@ -1942,14 +1946,22 @@ function isDiverEffectivelyEmpty(diver) {
 
 function initializeCallerStartAddress(data) {
   if (data.dive_site?.address) return;
-  const code = inferCallerCountryCode();
-  if (!code) return;
-  const countryName = getCountryName(code);
-  if (!countryName) return;
-  data.dive_site.address = countryName;
-  data.dive_site.country_code = code.toLowerCase();
+  data.dive_site.address = "United States";
+  data.dive_site.country_code = "us";
   data.dive_site.local_emergency_number = getLocalEmergencyNumber(data.dive_site.country_code);
-  data.meta.auto_local_language = resolveLocalLanguage(code);
+  data.meta.auto_local_language = resolveLocalLanguage("us");
+  shouldClearInitialDiveSiteAddress = true;
+}
+
+function clearInitialDiveSiteAddressAfterBootstrap() {
+  if (!shouldClearInitialDiveSiteAddress) return;
+  shouldClearInitialDiveSiteAddress = false;
+  state.dive_site.address = "";
+  state.dive_site.country_code = null;
+  state.dive_site.local_emergency_number = "";
+  state.meta.auto_local_language = "none";
+  setField("dive_site.address", "");
+  setField("dive_site.local_emergency_number", "");
 }
 
 function getLocalEmergencyNumber(countryCode) {
