@@ -1164,11 +1164,11 @@ function buildWhoSections(divers, pageSize) {
 function buildWhoTable(divers) {
   const rows = [
     { labelHtml: biHtml("name"), get: (d) => d.full_name || "-", weight: 1.0, className: "row-name" },
-    { labelHtml: biHtml("address"), get: (d) => d.address || "-", weight: 1.55, className: "row-address" },
+    { labelHtml: biHtml("address"), get: (d) => d.address || "-", weight: 0.85, className: "row-address" },
     { labelHtml: biRawHtml("Sex", "Geschlecht", "Sexo", "الجنس"), get: (d) => formatSexValue(d.sex), weight: 0.85, className: "row-sex" },
     { labelHtml: biRawHtml("Birth / Age", "Geburtstag / Alter", "Nacimiento / Edad", "الميلاد / العمر"), get: (d) => formatBirthAge(d.birth_date), weight: 0.95, className: "row-birth-age" },
     { labelHtml: biRawHtml("Dive Count", "Anzahl Tauchgaenge", "Numero de inmersiones", "عدد الغطسات"), get: (d) => String(d.dive_count ?? 0), weight: 0.9, className: "row-dive-count" },
-    { labelHtml: biHtml("certifications"), get: (d) => (d.certifications || []).join(", ") || "-", weight: 1.35, className: "row-certifications" },
+    { labelHtml: biHtml("certifications"), get: (d) => (d.certifications || []).join(", ") || "-", weight: 0.85, className: "row-certifications" },
     { labelHtml: biRawHtml("Breathing Gas", "Atemgas", "Gas respiratorio", "غاز التنفس"), get: (d) => d.breathing_gas || "-", weight: 0.9, className: "row-breathing-gas" },
     { labelHtml: biHtml("allergies"), get: (d) => (d.allergies || []).join(", ") || "-", weight: 1.0, className: "row-allergies" },
     { labelHtml: biHtml("conditions"), get: (d) => (d.medical?.conditions || []).join(", ") || "-", weight: 1.15, className: "row-conditions" },
@@ -1196,11 +1196,14 @@ function buildWhoTable(divers) {
     .join("");
 
   return `
-    <table class="data-table who-table weighted-table" style="--row-weight-total:${totalWeight}">
-      <tbody>
-        ${bodyRows}
-      </tbody>
-    </table>
+    <div class="who-table-wrap">
+      <div class="who-title-divider">${biRawHtml("Divers", "Taucher", "Buzos", "الغواصون")}</div>
+      <table class="data-table who-table weighted-table" style="--row-weight-total:${totalWeight}">
+        <tbody>
+          ${bodyRows}
+        </tbody>
+      </table>
+    </div>
   `;
 }
 
@@ -1306,7 +1309,8 @@ function formatEmergencyContactsHtml(contacts) {
         alt: "Emergency contact phone QR",
         lines: [firstLine, phone || "-"],
         qrPosition: index % 2 === 0 ? "left" : "right",
-        qrAlign: index % 2 === 0 ? "left" : "right"
+        qrAlign: index % 2 === 0 ? "left" : "right",
+        qrGap: "wide"
       });
     })
     .filter(Boolean);
@@ -1331,7 +1335,7 @@ function formatDiveInsuranceHtml(insurance) {
     insurance.dive_insurance_member_no ? `No: ${insurance.dive_insurance_member_no}` : null,
     insurance.dive_insurance_hotline ? `Hotline: ${insurance.dive_insurance_hotline}` : null
   ].filter(Boolean);
-  return renderInfoWithQr(lines, insurance.dive_insurance_hotline, "Dive insurance hotline QR", "tel", "right", "right", "normal");
+  return renderInfoWithQr(lines, insurance.dive_insurance_hotline, "Dive insurance hotline QR", "tel", "right", "right", "wide");
 }
 
 function renderOwnPhoneQrBlock(diver, index) {
@@ -1342,7 +1346,8 @@ function renderOwnPhoneQrBlock(diver, index) {
     qrPayload: vcard,
     alt: `Diver ${index + 1} contact QR`,
     qrPosition: "left",
-    qrAlign: "left"
+    qrAlign: "left",
+    qrGap: "wide"
   });
 }
 
@@ -1353,7 +1358,11 @@ function renderPhoneQrBlock(phone, options = {}) {
     : [displayText || "-"];
   const qrPosition = options.qrPosition === "left" ? "left" : "right";
   const qrAlign = options.qrAlign === "right" ? "right" : "left";
-  const qrGap = options.qrGap === "tight" ? "tight" : "normal";
+  const qrGap = options.qrGap === "tight"
+    ? "tight"
+    : options.qrGap === "wide"
+      ? "wide"
+      : "normal";
   if (!displayText && options.qrType !== "vcard") {
     return renderInfoWithQr(lines, "", options.alt || "Phone", "tel", qrPosition, qrAlign, qrGap);
   }

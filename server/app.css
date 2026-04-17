@@ -716,6 +716,10 @@ select {
   gap: calc(2px * var(--page-scale));
 }
 
+.qr-inline-block.qr-gap-wide {
+  gap: calc(14px * var(--page-scale));
+}
+
 .qr-stack {
   display: grid;
   gap: calc(6px * var(--page-scale));
@@ -758,11 +762,6 @@ select {
   margin-bottom: 10px;
 }
 
-.who-table th {
-  width: 28%;
-  background: #efefef;
-}
-
 .card-page-primary .section-who,
 .card-page-cont .section-who {
   flex: 1 1 auto;
@@ -782,15 +781,6 @@ select {
   flex: 1;
 }
 
-.who-table td {
-  text-align: center;
-  vertical-align: middle;
-}
-
-.who-table td .qr-inline-block {
-  text-align: left;
-}
-
 .where-table td .qr-inline-block,
 .what-table td .qr-inline-block {
   margin-inline: auto;
@@ -798,6 +788,126 @@ select {
 
 .who-table th {
   width: 31%;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.who-table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.who-table-wrap {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: calc(6px * var(--page-scale));
+}
+
+.who-title-divider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(10px * var(--page-scale));
+  width: 100%;
+  font-size: calc(15px * var(--page-scale));
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.who-title-divider::before,
+.who-title-divider::after {
+  content: "";
+  flex: 1 1 auto;
+  border-top: 1px solid #111;
+}
+
+.who-table td .qr-inline-block {
+  text-align: left;
+}
+
+.who-table th,
+.who-table td {
+  border: none;
+  border-bottom: 1px solid #111;
+  background: transparent;
+}
+
+.who-table th:not(:last-child),
+.who-table td:not(:last-child) {
+  border-right: 1px solid #111;
+}
+
+.who-table .row-name td {
+  font-weight: 800;
+}
+
+.who-table .row-name td,
+.who-table .row-address td,
+.who-table .row-sex td,
+.who-table .row-birth-age td,
+.who-table .row-dive-count td,
+.who-table .row-certifications td,
+.who-table .row-breathing-gas td,
+.who-table .row-allergies td,
+.who-table .row-conditions td,
+.who-table .row-medications td {
+  font-size: calc(17px * var(--page-scale));
+}
+
+.who-table .row-emergency-contact td {
+  vertical-align: top;
+}
+
+.who-table .row-emergency-contact .qr-stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 0;
+}
+
+.who-table .row-emergency-contact .qr-stack > .qr-inline-block:first-child {
+  align-self: flex-start;
+}
+
+.who-table .row-emergency-contact .qr-stack > .qr-inline-block:last-child {
+  align-self: flex-end;
+}
+
+.who-table .row-own-phone .qr-inline-code {
+  width: calc(78px * var(--page-scale));
+  height: calc(78px * var(--page-scale));
+}
+
+.who-table .row-dive-insurance .qr-inline-block {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.who-table .row-dive-insurance .qr-inline-text {
+  text-align: left;
+}
+
+.who-table .row-dive-insurance .qr-inline-code {
+  justify-self: end;
+}
+
+.who-table .row-own-phone .qr-inline-block {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+}
+
+.who-table .row-own-phone .qr-inline-text {
+  text-align: center;
+}
+
+.who-table .row-own-phone .qr-inline-code {
+  justify-self: start;
 }
 
 .card-page-cont .side-label,
