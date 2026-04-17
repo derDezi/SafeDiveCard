@@ -123,14 +123,16 @@
           <label>Divers in Group <input name="plan.divers_in_group" type="number" min="1" step="1" required></label>
         </fieldset>
 
-        <fieldset class="step-section section-with-tools">
+        <fieldset class="step-section">
           <legend data-i18n-key="divers">Divers</legend>
-          <div id="diversContainer"></div>
-          <div class="toolbar diver-toolbar">
+          <div class="toolbar diver-import-toolbar">
             <label class="button-like import-btn">
               <span>Load Diver Data</span>
               <input id="diverFileInput" type="file" accept="application/json" hidden>
             </label>
+          </div>
+          <div id="diversContainer"></div>
+          <div class="toolbar diver-footer-toolbar">
             <button id="addDiverBtn" type="button" data-i18n-key="btn_add_diver">Add Diver</button>
           </div>
         </fieldset>

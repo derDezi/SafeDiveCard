@@ -731,10 +731,10 @@ function renderDiversInputs(divers) {
       <section class="diver-block">
         <div class="diver-header">
           <h3>${biRaw("Diver", "Taucher", "Buzo", "غواص")} ${idx + 1}</h3>
-          <div class="diver-actions">
-            <button type="button" class="save-diver-btn save-btn" data-index="${idx}">Save Diver Data</button>
-            <button type="button" class="remove-diver-btn" data-index="${idx}">${biRaw("Remove", "Entfernen", "Quitar", "ازالة")}</button>
-          </div>
+        </div>
+        <div class="diver-actions">
+          <button type="button" class="save-diver-btn save-btn" data-index="${idx}">Save Diver Data</button>
+          <button type="button" class="remove-diver-btn" data-index="${idx}">${biRaw("Remove Diver", "Taucher entfernen", "Quitar buzo", "ازالة الغواص")}</button>
         </div>
         <div class="diver-grid">
           ${inputField(idx, "full_name", biRaw("Full Name", "Voller Name", "Nombre completo", "الاسم الكامل"), diver.full_name, "text", true)}

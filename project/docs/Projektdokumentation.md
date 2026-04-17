@@ -6,6 +6,7 @@
 - Das GitHub-Projekt sollte sauber dokumentiert werden, inklusive Verlinkung auf die Website und einer klaren Projektbeschreibung.
 - Mehrsprachigkeit pruefen und vollstaendig umsetzen.
 - Eine Suchmaschinenoptimierung (SEO) fuer Website und Projekt umsetzen, damit SafeDiveCard besser gefunden wird.
+- Pruefen, wie der Export bei mehr als zwei Tauchern aussieht und ob das Layout dann noch sauber funktioniert.
 
 ## Zweck
 Dieses Dokument sammelt alle gemeinsam erarbeiteten Inhalte:

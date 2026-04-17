@@ -144,7 +144,8 @@ body {
 }
 
 .section-tools,
-.diver-toolbar {
+.diver-import-toolbar,
+.diver-footer-toolbar {
   justify-content: flex-end;
   align-items: flex-start;
   align-self: flex-start;
@@ -408,12 +409,20 @@ select {
   padding-top: 34px;
 }
 
-.section-with-tools > .section-tools,
-.section-with-tools > .diver-toolbar {
+.section-with-tools > .section-tools {
   position: absolute;
   top: 10px;
   right: 12px;
   margin: 0;
+}
+
+.diver-import-toolbar {
+  margin-bottom: 10px;
+}
+
+.diver-footer-toolbar {
+  margin-top: 10px;
+  justify-content: flex-start;
 }
 
 .card {
@@ -936,7 +945,7 @@ select {
 .diver-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 10px;
 }
 
@@ -945,6 +954,7 @@ select {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+  margin-top: 8px;
 }
 
 .diver-header h3 {
@@ -1227,8 +1237,7 @@ select {
     padding-top: 12px;
   }
 
-  .section-with-tools > .section-tools,
-  .section-with-tools > .diver-toolbar {
+  .section-with-tools > .section-tools {
     position: static;
     margin-bottom: 10px;
     justify-content: flex-start;
