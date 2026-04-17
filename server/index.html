@@ -129,7 +129,7 @@
             <button id="printBtn" type="button" class="export-btn" data-i18n-key="btn_export_pdf">Export PDF</button>
           </div>
           <div class="export-info">
-            <p class="export-warning">Make sure to send a digital copy of this PDF to your dive buddies via email or WhatsApp before the dive.</p>
+            <p class="export-warning">Make sure to send a digital copy of this PDF to your dive buddies via email or WhatsApp before the dive. It is also a good idea to bring a printed version in a DIN A4 dry map case to the dive spot.</p>
           </div>
         </div>
       </section>
@@ -149,14 +149,26 @@
     <p>The source code is available on GitHub: <a href="https://github.com/derDezi/SafeDiveCard" target="_blank" rel="noreferrer">github.com/derDezi/SafeDiveCard</a>. The ongoing development is implemented with Codex AI.</p>
   </section>
 
-  <section class="panel site-status">
-    <h2>Status</h2>
-    <p id="autoLocalInfo" class="small-note">EN + Local (auto): not resolved yet. Use "Locate Address".</p>
-    <p id="langSupportNote" class="small-note">Auto local + optional extra are shown where translations are available.</p>
-    <p id="status" class="status">Ready.</p>
-  </section>
+  <details class="panel site-status">
+    <summary>Technical status</summary>
+    <div class="site-status-body">
+      <p id="autoLocalInfo" class="small-note">EN + Local (auto): not resolved yet. Use "Locate Address".</p>
+      <p id="langSupportNote" class="small-note">Auto local + optional extra are shown where translations are available.</p>
+      <p id="status" class="status">Ready.</p>
+    </div>
+  </details>
 
   <div id="toastContainer" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+  <div id="decoBeerModal" class="modal-backdrop hidden" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="decoBeerTitle">
+      <button id="decoBeerCloseBtn" class="modal-close-btn" type="button" aria-label="Close Deco Beer note">×</button>
+      <img src="assets/decobeer.png" alt="Deco Beer" class="modal-image">
+      <h2 id="decoBeerTitle">Thank you for using SafeDiveCard</h2>
+      <p>Thank you for using the tool. Creating and sharing your emergency card is the first important step toward a safer dive.</p>
+      <p>If you would like to buy the developer a Deco Beer, you can do that here:</p>
+      <p><a href="https://paypal.me/TimoSchmitt92" target="_blank" rel="noreferrer">paypal.me/TimoSchmitt92</a></p>
+    </div>
+  </div>
 
   <script src="app.js"></script>
 </body>

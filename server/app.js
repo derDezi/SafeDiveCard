@@ -23,9 +23,13 @@ const countryOverrideCountryField = document.getElementById("countryOverrideCoun
 const countryOverrideCountrySelect = document.getElementById("countryOverrideCountry");
 const langSupportNote = document.getElementById("langSupportNote");
 const toastContainer = document.getElementById("toastContainer");
+const decoBeerModal = document.getElementById("decoBeerModal");
+const decoBeerCloseBtn = document.getElementById("decoBeerCloseBtn");
 const TOAST_DURATION_MS = 10000;
 const BREATHING_GAS_OTHER_VALUE = "__other__";
 const PRESET_BREATHING_GASES = ["Air", "EAN32 (Nitrox 32)", "EAN36 (Nitrox 36)", "EAN40 (Nitrox 40)"];
+let shouldOpenDecoBeerModalAfterPrint = false;
+let previousDocumentTitle = document.title;
 const COUNTRY_OVERRIDE_OPTIONS = {
   europe: [
     { code: "de", label: "Germany (DE)" },
@@ -314,6 +318,16 @@ fitCardPages();
 window.addEventListener("resize", syncHeaderLogoHeight);
 window.addEventListener("resize", fitCardPages);
 window.addEventListener("beforeprint", fitCardPages);
+window.addEventListener("afterprint", handleAfterPrint);
+window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeDecoBeerModal();
+});
+
+decoBeerModal.addEventListener("click", (event) => {
+  if (event.target === decoBeerModal) closeDecoBeerModal();
+});
+
+decoBeerCloseBtn.addEventListener("click", closeDecoBeerModal);
 
 form.addEventListener("input", () => {
   readFormIntoState(state);
@@ -445,12 +459,13 @@ printBtn.addEventListener("click", () => {
   readFormIntoState(state);
   renderCard(state);
   renderReadiness(state);
-  const previousTitle = document.title;
+  previousDocumentTitle = document.title;
   document.title = buildPdfFileName(state);
+  shouldOpenDecoBeerModalAfterPrint = true;
   window.print();
   window.setTimeout(() => {
-    document.title = previousTitle;
-  }, 1000);
+    document.title = previousDocumentTitle;
+  }, 1500);
 });
 
 locateAddressBtn.addEventListener("click", async () => {
@@ -742,6 +757,23 @@ function downloadJsonFile(payload, filename) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function handleAfterPrint() {
+  document.title = previousDocumentTitle;
+  if (!shouldOpenDecoBeerModalAfterPrint) return;
+  shouldOpenDecoBeerModalAfterPrint = false;
+  openDecoBeerModal();
+}
+
+function openDecoBeerModal() {
+  decoBeerModal.classList.remove("hidden");
+  decoBeerModal.setAttribute("aria-hidden", "false");
+}
+
+function closeDecoBeerModal() {
+  decoBeerModal.classList.add("hidden");
+  decoBeerModal.setAttribute("aria-hidden", "true");
 }
 
 function readFormIntoState(data) {
