@@ -1107,7 +1107,7 @@ function buildWhoTable(divers) {
     { labelHtml: biRawHtml("Emergency Contact", "Notfallkontakt", "Contacto de emergencia", "جهة اتصال طارئة"), getHtml: (d) => formatEmergencyContactsHtml(d.emergency_contacts), weight: 1.6, className: "row-emergency-contact" },
     { labelHtml: biRawHtml("Health Insurance Provider", "Krankenversicherer", "Proveedor del seguro medico", "مزود التأمين الصحي"), get: (d) => d.insurance?.health_insurance || "-", weight: 1.0, className: "row-health-insurance" },
     { labelHtml: biRawHtml("Dive Insurance", "Tauchversicherung", "Seguro de buceo", "تامين الغوص"), getHtml: (d) => formatDiveInsuranceHtml(d.insurance), weight: 1.45, className: "row-dive-insurance" },
-    { labelHtml: biRawHtml("Own Phone", "Eigene Rufnummer", "Telefono propio", "رقم الهاتف"), getHtml: (d, idx) => renderOwnPhoneQrBlock(d, idx), weight: 1.2, className: "row-own-phone" }
+    { labelHtml: biRawHtml("Own Contact", "Eigener Kontakt", "Contacto propio", "جهة الاتصال الخاصة"), getHtml: (d, idx) => renderOwnPhoneQrBlock(d, idx), weight: 1.2, className: "row-own-phone" }
   ];
 
   const safeDivers = divers.length > 0 ? divers : [createEmptyDiver()];
@@ -2043,7 +2043,7 @@ function syncHeaderLogoHeight() {
   if (!toolTitleGroupEl || !toolBrandLogoEl) return;
   const h = toolTitleGroupEl.offsetHeight;
   if (!h) return;
-  toolBrandLogoEl.style.height = `${Math.round(h * 1.2)}px`;
+  toolBrandLogoEl.style.height = `${Math.round(h * 2.12)}px`;
 }
 
 function fitCardPages() {

@@ -25,14 +25,14 @@ body {
 }
 
 .topbar {
-  padding: 30px 22px 22px;
+  padding: 24px 22px 12px;
   border-bottom: none;
   background: transparent;
   color: var(--ink);
 }
 
 .topbar h1 {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   font-size: 42px;
   line-height: 1.05;
 }
