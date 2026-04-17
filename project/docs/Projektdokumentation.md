@@ -2,8 +2,10 @@
 
 ## Merker / offene Idee
 - Das mobile Design sollte grundlegend ueberarbeitet werden. Der aktuelle Fokus lag bisher auf Desktop und A4-Export.
+- Eine mobile App fuer SafeDiveCard bauen.
 - Das GitHub-Projekt sollte sauber dokumentiert werden, inklusive Verlinkung auf die Website und einer klaren Projektbeschreibung.
 - Mehrsprachigkeit pruefen und vollstaendig umsetzen.
+- Eine Suchmaschinenoptimierung (SEO) fuer Website und Projekt umsetzen, damit SafeDiveCard besser gefunden wird.
 
 ## Zweck
 Dieses Dokument sammelt alle gemeinsam erarbeiteten Inhalte:

@@ -25,11 +25,26 @@ const countryOverrideCountrySelect = document.getElementById("countryOverrideCou
 const langSupportNote = document.getElementById("langSupportNote");
 const toastContainer = document.getElementById("toastContainer");
 const altitudeDiveNote = document.getElementById("altitudeDiveNote");
+const elevationUnitSelect = document.getElementById("elevationUnit");
+const maxDepthUnitSelect = document.getElementById("maxDepthUnit");
 const decoBeerModal = document.getElementById("decoBeerModal");
 const decoBeerCloseBtn = document.getElementById("decoBeerCloseBtn");
 const TOAST_DURATION_MS = 10000;
 const BREATHING_GAS_OTHER_VALUE = "__other__";
 const PRESET_BREATHING_GASES = ["Air", "EAN32 (Nitrox 32)", "EAN36 (Nitrox 36)", "EAN40 (Nitrox 40)"];
+const FEET_PER_METER = 3.28084;
+const MEASUREMENT_FIELDS = {
+  elevation: {
+    inputName: "dive_site.elevation_m",
+    unitName: "ui.elevation_unit",
+    selectEl: elevationUnitSelect
+  },
+  maxDepth: {
+    inputName: "plan.max_depth_m",
+    unitName: "ui.max_depth_unit",
+    selectEl: maxDepthUnitSelect
+  }
+};
 let shouldOpenDecoBeerModalAfterPrint = false;
 let previousDocumentTitle = document.title;
 let mapPreviewDiveSite = null;
@@ -145,7 +160,7 @@ const I18N_EXTRA_TRANSLATIONS = {
   name: { fr: "Nom", it: "Nome" },
   address: { fr: "Adresse", it: "Indirizzo" },
   btn_locate_address: { fr: "Localiser l'adresse", it: "Trova indirizzo" },
-  elevation_m: { fr: "Altitude (m)", it: "Altitudine (m)" },
+  elevation_m: { fr: "Altitude", it: "Altitudine" },
   latitude_decimal: { fr: "Latitude (decimal)", it: "Latitudine (decimale)" },
   longitude_decimal: { fr: "Longitude (decimal)", it: "Longitudine (decimale)" },
   dive_base_phone: { fr: "Telephone base de plongee", it: "Telefono base immersione" },
@@ -156,7 +171,7 @@ const I18N_EXTRA_TRANSLATIONS = {
   chamber_info: { fr: "Informations caisson hyperbare", it: "Informazioni camera iperbarica" },
   dive_plan: { fr: "Plan de plongee", it: "Piano immersione" },
   summary: { fr: "Resume", it: "Riepilogo" },
-  max_depth_m: { fr: "Profondeur max (m)", it: "Profondita massima (m)" },
+  max_depth_m: { fr: "Profondeur max", it: "Profondita massima" },
   divers: { fr: "Plongeurs", it: "Subacquei" },
   btn_add_diver: { fr: "Ajouter plongeur", it: "Aggiungi subacqueo" },
   card_preview: { fr: "Apercu carte", it: "Anteprima scheda" },
@@ -265,7 +280,7 @@ const I18N = {
   name: { en: "Name", de: "Name", es: "Nombre", ar: "الاسم" },
   address: { en: "Address", de: "Adresse", es: "Dirección", ar: "العنوان" },
   btn_locate_address: { en: "Locate Address", de: "Adresse lokalisieren", es: "Localizar dirección", ar: "تحديد العنوان" },
-  elevation_m: { en: "Elevation (m)", de: "Höhe (m)", es: "Altitud (m)", ar: "الارتفاع (م)" },
+  elevation_m: { en: "Elevation", de: "Höhe", es: "Altitud", ar: "الارتفاع" },
   latitude_decimal: { en: "Latitude (decimal)", de: "Breitengrad (dezimal)", es: "Latitud (decimal)", ar: "خط العرض (عشري)" },
   longitude_decimal: { en: "Longitude (decimal)", de: "Längengrad (dezimal)", es: "Longitud (decimal)", ar: "خط الطول (عشري)" },
   dive_base_phone: { en: "Dive Base Phone", de: "Telefon Tauchbasis", es: "Teléfono base de buceo", ar: "هاتف مركز الغوص" },
@@ -276,7 +291,7 @@ const I18N = {
   chamber_info: { en: "Hyperbaric Chamber Information (Address and Emergency Contact Phone)", de: "Informationen zur Druckkammer (Adresse und Notfall-Telefonnummer)", es: "Informacion de camara hiperbárica (direccion y telefono de emergencia)", ar: "معلومات غرفة الضغط (العنوان ورقم هاتف الطوارئ)" },
   dive_plan: { en: "Dive Plan", de: "Tauchplan", es: "Plan de buceo", ar: "خطة الغوص" },
   summary: { en: "Dive Plan Summary (for example: number of days, planned dives per day, special conditions)", de: "Zusammenfassung des Tauchplans (zum Beispiel: Anzahl der Tage, geplante Tauchgaenge pro Tag, besondere Bedingungen)", es: "Resumen del plan de buceo (por ejemplo: numero de dias, inmersiones planificadas por dia, condiciones especiales)", ar: "ملخص خطة الغوص (على سبيل المثال: عدد الايام والغوصات المخطط لها يوميا والظروف الخاصة)" },
-  max_depth_m: { en: "Max Depth (m)", de: "Maximaltiefe (m)", es: "Profundidad máxima (m)", ar: "اقصى عمق (م)" },
+  max_depth_m: { en: "Max Depth", de: "Maximaltiefe", es: "Profundidad máxima", ar: "اقصى عمق" },
   divers: { en: "Divers", de: "Taucher", es: "Buzos", ar: "الغواصون" },
   btn_add_diver: { en: "Add Diver", de: "Taucher hinzufügen", es: "Añadir buzo", ar: "اضافة غواص" },
   card_preview: { en: "Card Preview", de: "Kartenvorschau", es: "Vista previa de tarjeta", ar: "معاينة البطاقة" },
@@ -311,6 +326,8 @@ const I18N = {
 };
 
 hydrateFormFromState(state);
+elevationUnitSelect.dataset.prevUnit = elevationUnitSelect.value || "m";
+maxDepthUnitSelect.dataset.prevUnit = maxDepthUnitSelect.value || "m";
 renderDiversInputs(state.divers);
 renderStaticI18n();
 syncMapPreviewFromDiveSite(state.dive_site);
@@ -341,6 +358,9 @@ form.addEventListener("input", () => {
   renderCard(state);
   renderReadiness(state);
 });
+
+elevationUnitSelect.addEventListener("change", () => handleMeasurementUnitChange("elevation"));
+maxDepthUnitSelect.addEventListener("change", () => handleMeasurementUnitChange("maxDepth"));
 
 optionalExtraLanguageSelect.addEventListener("change", () => {
   state.meta.optional_extra_language = optionalExtraLanguageSelect.value;
@@ -519,7 +539,7 @@ async function runLocateAddressLookup() {
     state.meta.auto_local_language = resolveLocalLanguage(state.dive_site.country_code);
     const elevationM = await fetchApproxElevation(coords.lat, coords.lon);
     if (elevationM !== null) {
-      setField("dive_site.elevation_m", String(elevationM));
+      syncMeasurementDisplayFromMeters("elevation", elevationM);
     }
     readFormIntoState(state);
     syncMapPreviewFromDiveSite(state.dive_site);
@@ -613,7 +633,7 @@ function createDefaultState() {
     dive_site: {
       name: "",
       address: "",
-      elevation_m: 0,
+      elevation_m: null,
       country_code: null,
       coordinates: { lat: null, lon: null },
       dive_base_phone: "",
@@ -689,7 +709,7 @@ function hydrateFormFromState(data) {
   populateCountryOverrideCountrySelect(continent, data.meta.country_override_code || "none");
   setField("dive_site.name", data.dive_site.name);
   setField("dive_site.address", data.dive_site.address);
-  setField("dive_site.elevation_m", data.dive_site.elevation_m);
+  syncMeasurementDisplayFromMeters("elevation", data.dive_site.elevation_m);
   setField("dive_site.lat", data.dive_site.coordinates?.lat ?? "");
   setField("dive_site.lon", data.dive_site.coordinates?.lon ?? "");
   setField("dive_site.dive_base_phone", data.dive_site.dive_base_phone || "");
@@ -699,7 +719,7 @@ function hydrateFormFromState(data) {
   setField("dive_site.emergency_phone_location", data.dive_site.emergency_phone_location || "");
   setField("dive_site.chamber_info", data.dive_site.chamber_info || "");
   setField("plan.summary", data.plan.summary);
-  setField("plan.max_depth_m", data.plan.max_depth_m);
+  syncMeasurementDisplayFromMeters("maxDepth", data.plan.max_depth_m);
   setField("plan.divers_in_group", data.plan.divers_in_group ?? Math.max(1, data.divers?.length || 1));
   updateLanguageUiState();
 }
@@ -832,7 +852,7 @@ function closeDecoBeerModal() {
 function readFormIntoState(data) {
   data.dive_site.name = getField("dive_site.name");
   data.dive_site.address = getField("dive_site.address");
-  data.dive_site.elevation_m = toNum(getField("dive_site.elevation_m"));
+  data.dive_site.elevation_m = parseMeasurementInputToMeters(getField("dive_site.elevation_m"), getMeasurementUnit("elevation"));
   const lat = toNullableNum(getField("dive_site.lat"));
   const lon = toNullableNum(getField("dive_site.lon"));
   data.dive_site.coordinates = (lat !== null && lon !== null) ? { lat, lon } : null;
@@ -843,7 +863,7 @@ function readFormIntoState(data) {
   data.dive_site.emergency_phone_location = getField("dive_site.emergency_phone_location");
   data.dive_site.chamber_info = getField("dive_site.chamber_info");
   data.plan.summary = getField("plan.summary");
-  data.plan.max_depth_m = toNum(getField("plan.max_depth_m"));
+  data.plan.max_depth_m = parseMeasurementInputToMeters(getField("plan.max_depth_m"), getMeasurementUnit("maxDepth"));
   data.plan.divers_in_group = Math.max(1, Math.trunc(toNum(getField("plan.divers_in_group"))));
 
   const rows = [...diversContainer.querySelectorAll("[data-diver-index][data-diver-field]")];
@@ -993,7 +1013,7 @@ function buildWhereTable(data, coordsText) {
     { key: "emergency_phone_location", value: escapeHtml(data.dive_site.emergency_phone_location || "-"), className: "row-emergency-phone-location" },
     { key: "chamber_info", labelKey: "hyperbaric_chamber", value: escapeHtml(data.dive_site.chamber_info || "-"), className: "row-chamber-info" }
   ];
-  return buildCompactTable(rows, {
+  return buildIconCompactTable(rows, {
     tableClassName: "data-table compact where-table",
     renderLabel: (row) => biHtml(row.labelKey || row.key),
     renderValue: (row) => row.value
@@ -1003,18 +1023,67 @@ function buildWhereTable(data, coordsText) {
 function buildWhatTable(data) {
   const rows = [
     { labelHtml: biHtml("plan"), value: escapeHtml(data.plan.summary), className: "row-plan" },
-    { labelHtml: biHtml("max_depth"), value: `${escapeHtml(String(data.plan.max_depth_m))} m`, className: "row-max-depth" },
+    { labelHtml: biHtml("max_depth"), value: formatMetricImperial(data.plan.max_depth_m), className: "row-max-depth" },
     {
       labelHtml: biRawHtml("Divers in Group", "Taucher in Gruppe", "Buzos en grupo", "الغواصون في المجموعة"),
       value: escapeHtml(String(data.plan.divers_in_group ?? data.divers.length)),
       className: "row-divers-in-group"
     }
   ];
-  return buildCompactTable(rows, {
+  return buildIconCompactTable(rows, {
     tableClassName: "data-table compact what-table",
     renderLabel: (row) => row.labelHtml,
     renderValue: (row) => row.value
   });
+}
+
+function getCompactTableIcons() {
+  return {
+    "row-emergency-number": { src: "assets/export-icons/local-emergency-number.png", alt: "Local emergency number" },
+    "row-site": { src: "assets/export-icons/site.png", alt: "Site" },
+    "row-address": { src: "assets/export-icons/address.png", alt: "Address" },
+    "row-elevation": { src: "assets/export-icons/elevation.png", alt: "Elevation" },
+    "row-coordinates": { src: "assets/export-icons/coordinates.png", alt: "Coordinates" },
+    "row-dive-base-phone": { src: "assets/export-icons/dive-base-phone.png", alt: "Dive base phone" },
+    "row-emergency-phone-location": { src: "assets/export-icons/emergency-phone-location.png", alt: "Emergency phone location" },
+    "row-dive-base-website": { src: "assets/export-icons/dive-base-website.png", alt: "Dive base website" },
+    "row-oxygen": { src: "assets/export-icons/oxygen-location.png", alt: "Oxygen location" },
+    "row-chamber-info": { src: "assets/export-icons/hyperbaric-chamber.png", alt: "Hyperbaric chamber" },
+    "row-plan": { src: "assets/export-icons/dive-plan-summary.png", alt: "Dive plan summary" },
+    "row-max-depth": { src: "assets/export-icons/max-depth.png", alt: "Max depth" },
+    "row-divers-in-group": { src: "assets/export-icons/divers-in-group.png", alt: "Divers in group" }
+  };
+}
+
+function renderIconCompactTableIcon(className) {
+  const compactTableIcons = getCompactTableIcons();
+  const rowClass = Object.keys(compactTableIcons).find((key) => className?.includes(key));
+  const icon = rowClass ? compactTableIcons[rowClass] : null;
+  if (!icon) {
+    return `<span class="compact-row-icon compact-row-icon-fallback" aria-hidden="true"></span>`;
+  }
+  return `<img class="compact-row-icon compact-row-icon-image" src="${escapeHtml(icon.src)}" alt="${escapeHtml(icon.alt)}">`;
+}
+
+function buildIconCompactTable(rows, options) {
+  const safeRows = Array.isArray(rows) ? rows : [];
+  const bodyRows = safeRows
+    .map((row) => {
+      const className = row.className ? ` ${row.className}` : "";
+      return `<tr class="${className.trim()}">
+        <td class="compact-icon-cell">${renderIconCompactTableIcon(row.className)}</td>
+        <td class="compact-label-cell">${options.renderLabel(row)}</td>
+        <td class="compact-value-cell"><div class="compact-value-inner">${options.renderValue(row)}</div></td>
+      </tr>`;
+    })
+    .join("");
+  return `
+    <table class="${options.tableClassName}">
+      <tbody>
+        ${bodyRows}
+      </tbody>
+    </table>
+  `;
 }
 
 function buildCompactTable(rows, options) {
@@ -1375,6 +1444,72 @@ function setField(name, value) {
   if (field) field.value = value ?? "";
 }
 
+function getMeasurementConfig(key) {
+  return MEASUREMENT_FIELDS[key] || null;
+}
+
+function getMeasurementUnit(key) {
+  const config = getMeasurementConfig(key);
+  const unit = config?.selectEl?.value === "ft" ? "ft" : "m";
+  return unit;
+}
+
+function metersToFeet(value) {
+  return value * FEET_PER_METER;
+}
+
+function feetToMeters(value) {
+  return value / FEET_PER_METER;
+}
+
+function parseMeasurementInputToMeters(rawValue, unit) {
+  const numeric = toNum(rawValue);
+  if (unit === "ft") return Math.round(feetToMeters(numeric));
+  return Math.round(numeric);
+}
+
+function formatMetersForDisplay(metersValue, unit) {
+  const numeric = toNullableNum(metersValue);
+  if (numeric === null) return "";
+  if (unit === "ft") return String(Math.round(metersToFeet(numeric)));
+  return String(Math.round(numeric));
+}
+
+function syncMeasurementDisplayFromMeters(key, metersValue) {
+  const config = getMeasurementConfig(key);
+  if (!config) return;
+  setField(config.inputName, formatMetersForDisplay(metersValue, getMeasurementUnit(key)));
+}
+
+function handleMeasurementUnitChange(key) {
+  const config = getMeasurementConfig(key);
+  if (!config?.selectEl) return;
+  const previousUnit = config.selectEl.dataset.prevUnit || "m";
+  const nextUnit = getMeasurementUnit(key);
+  const rawValue = getField(config.inputName);
+  config.selectEl.dataset.prevUnit = nextUnit;
+  if (!rawValue) {
+    setField(config.inputName, "");
+    readFormIntoState(state);
+    renderCard(state);
+    renderReadiness(state);
+    return;
+  }
+  const metersValue = parseMeasurementInputToMeters(rawValue, previousUnit);
+  syncMeasurementDisplayFromMeters(key, metersValue);
+  readFormIntoState(state);
+  renderCard(state);
+  renderReadiness(state);
+}
+
+function formatMetricImperial(valueInMeters) {
+  const meters = toNullableNum(valueInMeters);
+  if (meters === null) return "-";
+  const roundedMeters = Math.round(meters);
+  const feet = Math.round(metersToFeet(roundedMeters));
+  return `${roundedMeters} m / ${feet} ft`;
+}
+
 function splitCsv(value) {
   if (!value) return [];
   return value.split(",").map((s) => s.trim()).filter(Boolean);
@@ -1465,7 +1600,7 @@ function buildDiveSiteLookupQueries(name, address) {
 function formatElevationForExport(elevationM) {
   const elevation = toNullableNum(elevationM);
   if (elevation === null) return "-";
-  const base = `${escapeHtml(String(elevationM))} m`;
+  const base = formatMetricImperial(elevation);
   if (elevation > 300) {
     return `${base} <strong>| Altitude Dive!</strong>`;
   }
@@ -1991,14 +2126,16 @@ function getCountryName(code) {
 }
 
 function todayIso() {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function buildPdfFileName(data) {
   const site = sanitizeFilePart(data.dive_site?.name || "DiveSite");
-  const date = /^\d{4}-\d{2}-\d{2}$/.test(data.meta?.created_at || "")
-    ? data.meta.created_at
-    : todayIso();
+  const date = todayIso();
   return `SafeDiveCard-${site}-${date}`;
 }
 
