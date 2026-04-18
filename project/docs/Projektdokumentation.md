@@ -3,10 +3,13 @@
 ## Merker / offene Idee
 - Das mobile Design sollte grundlegend ueberarbeitet werden. Der aktuelle Fokus lag bisher auf Desktop und A4-Export.
 - Eine mobile App fuer SafeDiveCard bauen.
-- Das GitHub-Projekt sollte sauber dokumentiert werden, inklusive Verlinkung auf die Website und einer klaren Projektbeschreibung.
 - Mehrsprachigkeit pruefen und vollstaendig umsetzen.
 - Eine Suchmaschinenoptimierung (SEO) fuer Website und Projekt umsetzen, damit SafeDiveCard besser gefunden wird.
 - Pruefen, wie der Export bei mehr als zwei Tauchern aussieht und ob das Layout dann noch sauber funktioniert.
+- Die Suche nach hyperbaren Kammern vereinfachen.
+- Eine Tauchplatzliste als Referenz fuer die Suche vorbereiten.
+- Im Projekt erwaehnen, dass die Idee aus dem Sidemount Podcast kommt.
+- Einen Aktivitaetscounter fuer das Projekt bzw. die Nutzung einbauen.
 
 ## Zweck
 Dieses Dokument sammelt alle gemeinsam erarbeiteten Inhalte:

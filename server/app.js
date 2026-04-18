@@ -29,6 +29,7 @@ const elevationUnitSelect = document.getElementById("elevationUnit");
 const maxDepthUnitSelect = document.getElementById("maxDepthUnit");
 const decoBeerModal = document.getElementById("decoBeerModal");
 const decoBeerCloseBtn = document.getElementById("decoBeerCloseBtn");
+const LANGUAGE_PACKS = window.SafeDiveCardLanguagePacks || { optionLabels: {}, i18n: {}, raw: {}, sex: {} };
 const TOAST_DURATION_MS = 10000;
 const BREATHING_GAS_OTHER_VALUE = "__other__";
 const PRESET_BREATHING_GASES = ["Air", "EAN32 (Nitrox 32)", "EAN36 (Nitrox 36)", "EAN40 (Nitrox 40)"];
@@ -51,42 +52,57 @@ let mapPreviewDiveSite = null;
 let shouldClearInitialDiveSiteAddress = false;
 const COUNTRY_OVERRIDE_OPTIONS = {
   europe: [
-    { code: "de", label: "Germany (DE)" },
-    { code: "es", label: "Spain (ES)" },
-    { code: "fr", label: "France (FR)" },
-    { code: "it", label: "Italy (IT)" },
-    { code: "pt", label: "Portugal (PT)" },
-    { code: "nl", label: "Netherlands (NL)" },
-    { code: "pl", label: "Poland (PL)" }
+    { code: "de", name: "Germany" },
+    { code: "es", name: "Spain" },
+    { code: "fr", name: "France" },
+    { code: "it", name: "Italy" },
+    { code: "pt", name: "Portugal" },
+    { code: "nl", name: "Netherlands" },
+    { code: "pl", name: "Poland" }
   ],
   africa: [
-    { code: "eg", label: "Egypt (EG)" },
-    { code: "ma", label: "Morocco (MA)" },
-    { code: "tn", label: "Tunisia (TN)" },
-    { code: "dz", label: "Algeria (DZ)" }
+    { code: "eg", name: "Egypt" },
+    { code: "ma", name: "Morocco" },
+    { code: "tn", name: "Tunisia" },
+    { code: "dz", name: "Algeria" }
   ],
   asia: [
-    { code: "sa", label: "Saudi Arabia (SA)" },
-    { code: "ae", label: "United Arab Emirates (AE)" }
+    { code: "sa", name: "Saudi Arabia" },
+    { code: "ae", name: "United Arab Emirates" }
   ]
 };
 
-const FULLY_TRANSLATED = new Set(["de", "es", "ar", "fr", "it"]);
+const EXTRA_LANGUAGE_ORDER = ["zh", "hi", "es", "fr", "pt", "id", "ru", "de", "ja", "ar", "vi", "tr", "tl", "ko", "th", "it", "nl", "pl"];
+const FULLY_TRANSLATED = new Set(EXTRA_LANGUAGE_ORDER);
 const LANGUAGE_LABEL = {
   en: "English",
+  zh: "Mandarin-Chinesisch",
+  hi: "Hindi",
+  es: "Spanisch",
+  fr: "Franzoesisch",
+  pt: "Portugiesisch",
+  id: "Indonesisch",
+  ru: "Russisch",
   de: "Deutsch",
-  es: "Espanol",
-  fr: "Francais",
-  it: "Italiano",
-  pt: "Portugues",
-  nl: "Nederlands",
-  pl: "Polski",
-  ar: "Arabic"
+  ja: "Japanisch",
+  ar: "Arabisch",
+  vi: "Vietnamesisch",
+  tr: "Tuerkisch",
+  tl: "Tagalog",
+  ko: "Koreanisch",
+  th: "Thai",
+  it: "Italienisch",
+  nl: "Niederlaendisch",
+  pl: "Polnisch"
 };
 const LOCAL_LANGUAGE_BY_COUNTRY = {
   de: "de",
   at: "de",
   ch: "de",
+  cn: "zh",
+  tw: "zh",
+  sg: "zh",
+  in: "hi",
   es: "es",
   mx: "es",
   ar: "es",
@@ -95,6 +111,15 @@ const LOCAL_LANGUAGE_BY_COUNTRY = {
   it: "it",
   pt: "pt",
   br: "pt",
+  id: "id",
+  ru: "ru",
+  jp: "ja",
+  vn: "vi",
+  tr: "tr",
+  ph: "tl",
+  kr: "ko",
+  kp: "ko",
+  th: "th",
   nl: "nl",
   pl: "pl",
   eg: "ar",
@@ -104,6 +129,39 @@ const LOCAL_LANGUAGE_BY_COUNTRY = {
   tn: "ar",
   dz: "ar"
 };
+
+function getLanguageOptionLabel(code) {
+  return LANGUAGE_PACKS.optionLabels?.[code] || LANGUAGE_LABEL[code] || code;
+}
+
+function getCountryFlagEmoji(code) {
+  const normalized = String(code || "").trim().toUpperCase();
+  if (!/^[A-Z]{2}$/.test(normalized)) return "";
+  return String.fromCodePoint(...[...normalized].map((char) => 127397 + char.charCodeAt(0)));
+}
+
+function getCountryOverrideOptionLabel(option) {
+  const flag = getCountryFlagEmoji(option.code);
+  return `${flag ? `${flag} ` : ""}${option.name} (${String(option.code).toUpperCase()})`;
+}
+
+function populateOptionalExtraLanguageOptions(selectedCode = "none") {
+  optionalExtraLanguageSelect.innerHTML = [
+    `<option value="none">${escapeHtml(biText("none_option"))}</option>`,
+    ...EXTRA_LANGUAGE_ORDER.map((code) => `<option value="${code}">${escapeHtml(getLanguageOptionLabel(code))}</option>`)
+  ].join("");
+  optionalExtraLanguageSelect.value = EXTRA_LANGUAGE_ORDER.includes(selectedCode) ? selectedCode : "none";
+}
+
+function populateCountryOverrideContinentOptions(selectedValue = "none") {
+  countryOverrideContinentSelect.innerHTML = [
+    `<option value="none">${escapeHtml(biText("no_override_auto"))}</option>`,
+    `<option value="europe">${escapeHtml(biText("continent_europe"))}</option>`,
+    `<option value="africa">${escapeHtml(biText("continent_africa"))}</option>`,
+    `<option value="asia">${escapeHtml(biText("continent_asia"))}</option>`
+  ].join("");
+  countryOverrideContinentSelect.value = ["europe", "africa", "asia"].includes(selectedValue) ? selectedValue : "none";
+}
 
 const ALL_ISO_COUNTRY_CODES = new Set("ad ae af ag ai al am ao aq ar as at au aw ax az ba bb bd be bf bg bh bi bj bl bm bn br bs bt bv bw by bz ca cc cf cg ch ci ck cl cm cn co cr cu cv cw cx cy cz de dj dk dm do dz ec ee eg eh er es et fi fj fk fo fr ga gb gd ge gf gg gh gi gl gm gn gp gq gr gs gt gu gw gy hk hm hn hr ht hu id ie il im in io iq is it je jm jo jp ke kg kh ki km kn kw ky kz la lb lc li lk lr ls lt lu lv ly ma mc me mf mg mh ml mm mn mo mp mq mr ms mt mu mv mw mx my mz na nc ne nf ng ni nl no np nr nu nz om pa pe pf pg ph pk pl pm pn pr pt pw py qa re ro rs ru rw sa sb sc sd se sg si sj sk sl sm sn so sr ss st sv sx sy sz tc td tf tg th tj tk tl tm tn to tr tt tv ua ug um us uy uz va vc vn vu wf ws ye yt za zm zw".split(" "));
 
@@ -152,9 +210,33 @@ const VERIFIED_EMERGENCY_NUMBER_BY_COUNTRY = {
 };
 
 const I18N_EXTRA_TRANSLATIONS = {
+  languages_section: { fr: "Langues", it: "Lingue" },
+  local_language_label: { fr: "Langue locale du site de plongee (auto selon le pays, remplacement optionnel)", it: "Lingua locale del sito di immersione (automatica in base al paese, override opzionale)" },
+  display_language_label: { fr: "Langue d'affichage / langue supplementaire optionnelle", it: "Lingua di visualizzazione / lingua extra opzionale" },
+  no_override_auto: { fr: "Aucun remplacement (utiliser l'auto local)", it: "Nessun override (usa automatico locale)" },
+  continent_europe: { fr: "Europe", it: "Europa" },
+  continent_africa: { fr: "Afrique", it: "Africa" },
+  continent_asia: { fr: "Asie", it: "Asia" },
+  override_country: { fr: "Pays de remplacement", it: "Paese override" },
+  select_country: { fr: "Choisir un pays", it: "Seleziona paese" },
+  none_option: { fr: "Aucun", it: "Nessuno" },
+  btn_clear: { fr: "Effacer", it: "Cancella" },
+  altitude_dive_note: { fr: "Au-dessus de 300 m, ceci est considere comme une plongee en altitude. Utilisez les tables de decompression pour plongee en altitude et assurez-vous que votre ordinateur de plongee est regle en consequence.", it: "Oltre i 300 m questa e considerata un'immersione in quota. Usa le tabelle di decompressione per immersioni in quota e assicurati che il computer da immersione sia impostato correttamente." },
+  locate_address_hint: { fr: "La latitude/longitude et une altitude approximative peuvent etre renseignees automatiquement via Localiser l'adresse.", it: "Latitudine/longitudine e altitudine approssimativa possono essere compilate automaticamente tramite Trova indirizzo." },
+  divers_in_group_label: { fr: "Plongeurs dans le groupe", it: "Subacquei nel gruppo" },
+  map_title: { fr: "Carte", it: "Mappa" },
+  export_title: { fr: "Exportation", it: "Esporta" },
+  export_warning: { fr: "Assurez-vous d'envoyer une copie numerique de ce PDF a vos binomes par e-mail ou WhatsApp avant la plongee. Il est egalement conseille d'apporter une version imprimee dans une pochette DIN A4 etanche sur le site de plongee.", it: "Assicurati di inviare una copia digitale di questo PDF ai tuoi compagni di immersione via e-mail o WhatsApp prima dell'immersione. E inoltre consigliabile portare una versione stampata in una custodia impermeabile DIN A4 al sito di immersione." },
+  deco_beer_title: { fr: "Merci d'utiliser SafeDiveCard", it: "Grazie per aver utilizzato SafeDiveCard" },
+  deco_beer_message: { fr: "Merci d'utiliser cet outil. Creer et partager votre carte d'urgence est la premiere etape importante vers une plongee plus sure.", it: "Grazie per aver utilizzato lo strumento. Creare e condividere la tua scheda di emergenza e il primo passo importante verso un'immersione piu sicura." },
+  deco_beer_support: { fr: "Si vous souhaitez offrir une Deco Beer au developpeur, vous pouvez le faire ici :", it: "Se vuoi offrire una Deco Beer allo sviluppatore, puoi farlo qui:" },
   input_title: { fr: "Saisie", it: "Inserimento" },
   btn_import_json: { fr: "Charger donnees plongee", it: "Carica dati immersione" },
   btn_export_json: { fr: "Enregistrer donnees plongee", it: "Salva dati immersione" },
+  btn_import_dive_site: { fr: "Charger donnees du site", it: "Carica dati del sito" },
+  btn_export_dive_site: { fr: "Enregistrer donnees du site", it: "Salva dati del sito" },
+  btn_import_divers: { fr: "Charger donnees plongeur", it: "Carica dati subacqueo" },
+  btn_export_diver: { fr: "Enregistrer donnees plongeur", it: "Salva dati subacqueo" },
   btn_export_pdf: { fr: "Exporter PDF", it: "Esporta PDF" },
   dive_site: { fr: "Site de plongee", it: "Sito di immersione" },
   name: { fr: "Nom", it: "Nome" },
@@ -271,9 +353,33 @@ initializeCallerStartAddress(state);
 
 const I18N = {
   header_subtitle: { en: "Create an emergency dive card for a safe dive.", de: "Erstelle eine Notfall-Tauchkarte fuer einen sicheren Tauchgang.", es: "Crea una tarjeta de emergencia para un buceo seguro.", fr: "Creez une carte d'urgence de plongee pour une plongee sure.", it: "Crea una scheda di emergenza per un'immersione sicura.", ar: "انشئ بطاقة طوارئ للغوص من اجل غوص امن." },
+  languages_section: { en: "Languages", de: "Sprachen", es: "Idiomas", ar: "اللغات" },
+  local_language_label: { en: "Local dive site language (auto by dive site country, optional override)", de: "Lokale Sprache des Tauchplatzes (automatisch nach Tauchplatz-Land, optional ueberschreiben)", es: "Idioma local del sitio de buceo (automatico por pais del sitio, opcion de reemplazo)", ar: "لغة موقع الغوص المحلية (تلقائيا حسب بلد موقع الغوص مع امكانية الاستبدال)" },
+  display_language_label: { en: "Display language / optional extra language", de: "Anzeigesprache / optionale Zusatzsprache", es: "Idioma de visualizacion / idioma extra opcional", ar: "لغة العرض / لغة اضافية اختيارية" },
+  no_override_auto: { en: "No override (use auto local)", de: "Kein Override (automatisch lokal nutzen)", es: "Sin reemplazo (usar idioma local automatico)", ar: "بدون استبدال (استخدم اللغة المحلية التلقائية)" },
+  continent_europe: { en: "Europe", de: "Europa", es: "Europa", ar: "اوروبا" },
+  continent_africa: { en: "Africa", de: "Afrika", es: "Africa", ar: "افريقيا" },
+  continent_asia: { en: "Asia", de: "Asien", es: "Asia", ar: "اسيا" },
+  override_country: { en: "Override country", de: "Land ueberschreiben", es: "Pais de reemplazo", ar: "استبدال البلد" },
+  select_country: { en: "Select country", de: "Land waehlen", es: "Seleccionar pais", ar: "اختر البلد" },
+  none_option: { en: "None", de: "Keine", es: "Ninguno", ar: "لا شيء" },
+  btn_clear: { en: "Clear", de: "Leeren", es: "Limpiar", ar: "مسح" },
+  altitude_dive_note: { en: "Above 300 m this is considered an altitude dive. Use altitude dive deco tables and make sure your dive computer is set accordingly.", de: "Ab 300 m gilt dies als Hoehentauchgang. Verwende Hoehentauchgang-Dekotabellen und stelle sicher, dass dein Tauchcomputer entsprechend eingestellt ist.", es: "Por encima de 300 m esto se considera una inmersion en altitud. Usa tablas de descompresion para altitud y asegúrate de que tu ordenador de buceo este configurado correctamente.", ar: "فوق 300 متر يعتبر هذا غوصا على ارتفاع. استخدم جداول تخفيف الضغط للغوص على ارتفاع وتاكد من ضبط كمبيوتر الغوص بالشكل الصحيح." },
+  locate_address_hint: { en: "Latitude/Longitude and rough elevation can be auto-filled via Locate Address.", de: "Breiten-/Laengengrad und ungefaehre Hoehe koennen ueber Adresse lokalisieren automatisch ausgefuellt werden.", es: "La latitud/longitud y una altitud aproximada pueden completarse automaticamente con Localizar direccion.", ar: "يمكن تعبئة خط العرض وخط الطول والارتفاع التقريبي تلقائيا عبر تحديد العنوان." },
+  divers_in_group_label: { en: "Divers in Group", de: "Taucher in Gruppe", es: "Buzos en el grupo", ar: "الغواصون في المجموعة" },
+  map_title: { en: "Map", de: "Karte", es: "Mapa", ar: "الخريطة" },
+  export_title: { en: "Export", de: "Export", es: "Exportar", ar: "التصدير" },
+  export_warning: { en: "Make sure to send a digital copy of this PDF to your dive buddies via email or WhatsApp before the dive. It is also a good idea to bring a printed version in a DIN A4 dry map case to the dive spot.", de: "Stelle sicher, dass du vor dem Tauchgang eine digitale Kopie dieses PDFs per E-Mail oder WhatsApp an deine Tauchpartner sendest. Zusaetzlich ist es sinnvoll, eine ausgedruckte Version in einem DIN A4 Dry Map Case mit zum Tauchplatz zu nehmen.", es: "Asegurate de enviar una copia digital de este PDF a tus companeros de buceo por correo electronico o WhatsApp antes de la inmersion. Tambien es buena idea llevar una version impresa en una funda impermeable DIN A4 al punto de buceo.", ar: "تاكد من ارسال نسخة رقمية من ملف PDF هذا الى رفاق الغوص عبر البريد الالكتروني او واتساب قبل الغوص. ومن الجيد ايضا اصطحاب نسخة مطبوعة داخل حافظة DIN A4 مقاومة للماء الى موقع الغوص." },
+  deco_beer_title: { en: "Thank you for using SafeDiveCard", de: "Danke fuer die Nutzung von SafeDiveCard", es: "Gracias por usar SafeDiveCard", ar: "شكرا لاستخدام SafeDiveCard" },
+  deco_beer_message: { en: "Thank you for using the tool. Creating and sharing your emergency card is the first important step toward a safer dive.", de: "Danke fuer die Nutzung des Tools. Das Erstellen und Teilen deiner Notfallkarte ist der erste wichtige Schritt zu einem sichereren Tauchgang.", es: "Gracias por usar la herramienta. Crear y compartir tu tarjeta de emergencia es el primer paso importante hacia un buceo mas seguro.", ar: "شكرا لاستخدام الاداة. انشاء بطاقة الطوارئ الخاصة بك ومشاركتها هو اول خطوة مهمة نحو غوص اكثر امانا." },
+  deco_beer_support: { en: "If you would like to buy the developer a Deco Beer, you can do that here:", de: "Wenn du dem Entwickler ein Deco-Bier ausgeben moechtest, kannst du das hier tun:", es: "Si quieres invitar al desarrollador a una Deco Beer, puedes hacerlo aqui:", ar: "اذا اردت ان تقدم للمطور Deco Beer فيمكنك فعل ذلك هنا:" },
   input_title: { en: "Input", de: "Eingabe", es: "Entrada", ar: "الادخال" },
   btn_import_json: { en: "Load Dive Data", de: "Tauchdaten laden", es: "Cargar datos de buceo", ar: "تحميل بيانات الغوص" },
   btn_export_json: { en: "Save Dive Data", de: "Tauchdaten speichern", es: "Guardar datos de buceo", ar: "حفظ بيانات الغوص" },
+  btn_import_dive_site: { en: "Load Dive Site Data", de: "Tauchplatzdaten laden", es: "Cargar datos del sitio de buceo", ar: "تحميل بيانات موقع الغوص" },
+  btn_export_dive_site: { en: "Save Dive Site Data", de: "Tauchplatzdaten speichern", es: "Guardar datos del sitio de buceo", ar: "حفظ بيانات موقع الغوص" },
+  btn_import_divers: { en: "Load Diver Data", de: "Taucherdaten laden", es: "Cargar datos del buzo", ar: "تحميل بيانات الغواص" },
+  btn_export_diver: { en: "Save Diver Data", de: "Taucherdaten speichern", es: "Guardar datos del buzo", ar: "حفظ بيانات الغواص" },
   btn_export_pdf: { en: "Export PDF", de: "PDF exportieren", es: "Exportar PDF", ar: "تصدير PDF" },
   additional_language: { en: "Additional language", de: "Zusatzsprache", es: "Idioma adicional", ar: "لغة اضافية" },
   dive_site: { en: "Dive Site", de: "Tauchplatz", es: "Lugar de buceo", ar: "موقع الغوص" },
@@ -324,6 +430,27 @@ const I18N = {
   open_search_map: { en: "Open search map", de: "Suchkarte öffnen", es: "Abrir mapa de búsqueda", ar: "افتح خريطة البحث" },
   precise_marker_hint: { en: "use \"Locate Address\" for a precise marker.", de: "\"Adresse lokalisieren\" für präzisen Marker nutzen.", es: "usa \"Localizar dirección\" para un marcador preciso.", ar: "استخدم تحديد العنوان للحصول على مؤشر دقيق." }
 };
+
+for (const [key, translations] of Object.entries(LANGUAGE_PACKS.i18n || {})) {
+  I18N[key] = { ...(I18N[key] || {}), ...translations };
+}
+
+for (const [lang, translations] of Object.entries(LANGUAGE_PACKS.raw || {})) {
+  RAW_TRANSLATIONS[lang] = { ...(RAW_TRANSLATIONS[lang] || {}), ...translations };
+}
+
+const SEX_LABELS = {
+  M: { en: "Male", de: "Maennlich", es: "Masculino", fr: "Masculin", it: "Maschile", ar: "ذكر" },
+  F: { en: "Female", de: "Weiblich", es: "Femenino", fr: "Feminin", it: "Femminile", ar: "انثى" },
+  X: { en: "Diverse", de: "Divers", es: "Diverso", fr: "Divers", it: "Diverso", ar: "متنوع" }
+};
+
+for (const [code, translations] of Object.entries(LANGUAGE_PACKS.sex || {})) {
+  SEX_LABELS[code] = { ...(SEX_LABELS[code] || {}), ...translations };
+}
+
+populateOptionalExtraLanguageOptions(state.meta.optional_extra_language || "none");
+populateCountryOverrideContinentOptions(getCountryOverrideContinent(state.meta.country_override_code || "none"));
 
 hydrateFormFromState(state);
 elevationUnitSelect.dataset.prevUnit = elevationUnitSelect.value || "m";
@@ -733,7 +860,7 @@ function renderDiversInputs(divers) {
           <h3>${biRaw("Diver", "Taucher", "Buzo", "غواص")} ${idx + 1}</h3>
         </div>
         <div class="diver-actions">
-          <button type="button" class="save-diver-btn save-btn" data-index="${idx}">Save Diver Data</button>
+          <button type="button" class="save-diver-btn save-btn" data-index="${idx}">${escapeHtml(biText("btn_export_diver"))}</button>
           <button type="button" class="remove-diver-btn" data-index="${idx}">${biRaw("Remove Diver", "Taucher entfernen", "Quitar buzo", "ازالة الغواص")}</button>
         </div>
         <div class="diver-grid">
@@ -1217,12 +1344,7 @@ function formatBirthAge(birthDate) {
 
 function formatSexValue(value) {
   const normalized = String(value || "").toUpperCase();
-  const labelsByCode = {
-    M: { en: "Male", de: "Maennlich", es: "Masculino", fr: "Masculin", it: "Maschile", ar: "ذكر" },
-    F: { en: "Female", de: "Weiblich", es: "Femenino", fr: "Feminin", it: "Femminile", ar: "انثى" },
-    X: { en: "Diverse", de: "Divers", es: "Diverso", fr: "Divers", it: "Diverso", ar: "متنوع" }
-  };
-  const entry = labelsByCode[normalized];
+  const entry = SEX_LABELS[normalized];
   if (!entry) return value || "-";
   return formatLocalizedValue(entry, getExportLanguages());
 }
@@ -1238,9 +1360,9 @@ function formatLocalizedValue(entry, languages) {
 
 function getSexOptions() {
   return [
-    { value: "M", label: formatLocalizedValue({ en: "Male", de: "Maennlich", es: "Masculino", fr: "Masculin", it: "Maschile", ar: "ذكر" }, getUiLanguages()) },
-    { value: "F", label: formatLocalizedValue({ en: "Female", de: "Weiblich", es: "Femenino", fr: "Feminin", it: "Femminile", ar: "انثى" }, getUiLanguages()) },
-    { value: "X", label: formatLocalizedValue({ en: "Diverse", de: "Divers", es: "Diverso", fr: "Divers", it: "Diverso", ar: "متنوع" }, getUiLanguages()) }
+    { value: "M", label: formatLocalizedValue(SEX_LABELS.M, getUiLanguages()) },
+    { value: "F", label: formatLocalizedValue(SEX_LABELS.F, getUiLanguages()) },
+    { value: "X", label: formatLocalizedValue(SEX_LABELS.X, getUiLanguages()) }
   ];
 }
 
@@ -1804,8 +1926,8 @@ function updateLanguageUiState() {
   const effective = getEffectiveLocalLanguage();
   const extra = state.meta.optional_extra_language || "none";
   const cc = state.dive_site.country_code ? state.dive_site.country_code.toUpperCase() : null;
-  const autoLabel = auto !== "none" ? (LANGUAGE_LABEL[auto] || auto) : "not resolved";
-  const effectiveLabel = effective !== "none" ? (LANGUAGE_LABEL[effective] || effective) : "none";
+  const autoLabel = auto !== "none" ? getLanguageOptionLabel(auto) : "not resolved";
+  const effectiveLabel = effective !== "none" ? getLanguageOptionLabel(effective) : biText("none_option");
   const overrideOn = state.meta.country_override_code !== "none";
   autoLocalInfo.textContent = cc
     ? `EN + Local (auto): ${autoLabel} [${cc}] | Effective local: ${effectiveLabel}${overrideOn ? " (override)" : ""}`
@@ -1825,6 +1947,10 @@ function renderStaticI18n() {
     const key = node.dataset.i18nKey;
     node.textContent = biText(key);
   }
+  populateOptionalExtraLanguageOptions(state.meta.optional_extra_language || "none");
+  const continent = countryOverrideContinentSelect.value || getCountryOverrideContinent(state.meta.country_override_code || "none");
+  populateCountryOverrideContinentOptions(continent);
+  populateCountryOverrideCountrySelect(continent, state.meta.country_override_code || "none");
   syncHeaderLogoHeight();
 }
 
@@ -1923,8 +2049,8 @@ function populateCountryOverrideCountrySelect(continent, selectedCode = "none") 
   if (!countryOverrideCountrySelect || !countryOverrideCountryField) return;
   const options = COUNTRY_OVERRIDE_OPTIONS[continent] || [];
   countryOverrideCountrySelect.innerHTML = [
-    `<option value="none">Select country</option>`,
-    ...options.map((option) => `<option value="${escapeHtml(option.code)}"${option.code === selectedCode ? " selected" : ""}>${escapeHtml(option.label)}</option>`)
+    `<option value="none">${escapeHtml(biText("select_country"))}</option>`,
+    ...options.map((option) => `<option value="${escapeHtml(option.code)}"${option.code === selectedCode ? " selected" : ""}>${escapeHtml(getCountryOverrideOptionLabel(option))}</option>`)
   ].join("");
   countryOverrideCountryField.classList.toggle("hidden", continent === "none");
 }
