@@ -1012,6 +1012,10 @@ select {
   text-align: center;
 }
 
+.site-info-intro {
+  margin-bottom: 18px;
+}
+
 .site-info p {
   margin: 0;
   max-width: 1100px;
@@ -1024,6 +1028,111 @@ select {
 
 .site-info p + p {
   margin-top: 8px;
+}
+
+.podcast-origin {
+  display: grid;
+  grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: stretch;
+  max-width: 1100px;
+  margin: 24px auto 26px;
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(4, 28, 39, 0.34);
+  border: 1px solid rgba(138, 220, 242, 0.14);
+  text-align: left;
+}
+
+.podcast-origin-video {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.podcast-origin-video-frame {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  min-height: 220px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(138, 220, 242, 0.24);
+  background:
+    linear-gradient(160deg, rgba(9, 68, 92, 0.92), rgba(111, 28, 28, 0.9)),
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.14), transparent 46%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #f7fcff;
+  text-decoration: none;
+}
+
+.podcast-origin-video-frame:hover {
+  color: #f7fcff;
+  border-color: rgba(199, 244, 255, 0.42);
+  transform: translateY(-1px);
+}
+
+.podcast-origin-kicker {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.podcast-origin-video-frame strong {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.podcast-origin-video-frame span {
+  line-height: 1.25;
+}
+
+.podcast-origin-play {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: auto;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  font-weight: 700;
+}
+
+.podcast-origin-link {
+  text-align: left;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.podcast-origin-copy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.podcast-origin-copy p {
+  max-width: none;
+  text-align: left;
+}
+
+.podcast-origin-copy p + p {
+  margin-top: 10px;
+}
+
+.site-info-block {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 18px;
+}
+
+.site-info-block + .site-info-block {
+  margin-top: 14px;
 }
 
 .site-info a {
@@ -1210,6 +1319,10 @@ select {
   .action-toolbar {
     margin-left: 0;
     justify-content: flex-start;
+  }
+
+  .podcast-origin {
+    grid-template-columns: 1fr;
   }
 
   .export-grid {

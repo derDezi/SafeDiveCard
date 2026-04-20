@@ -120,6 +120,12 @@
         "oxygen_location": {
           "type": "string"
         },
+        "local_emergency_number": {
+          "type": "string"
+        },
+        "hospital_info": {
+          "type": "string"
+        },
         "emergency_phone_location": {
           "type": "string"
         },

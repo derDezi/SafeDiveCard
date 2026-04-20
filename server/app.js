@@ -249,6 +249,9 @@ const I18N_EXTRA_TRANSLATIONS = {
   dive_base_website: { fr: "Site web base de plongee", it: "Sito web base immersione" },
   oxygen_location: { fr: "Emplacement oxygene", it: "Posizione ossigeno" },
   local_emergency_number: { fr: "Numero urgence local", it: "Numero emergenza locale" },
+  emergency_number_hospital: { fr: "Numero urgence / Hopital", it: "Numero emergenza / Ospedale" },
+  hospital_info: { fr: "Hopital d'urgence (nom et adresse)", it: "Ospedale di emergenza (nome e indirizzo)" },
+  hospital: { fr: "Hopital", it: "Ospedale" },
   emergency_phone_location: { fr: "Emplacement telephone urgence", it: "Posizione telefono emergenza" },
   chamber_info: { fr: "Informations caisson hyperbare", it: "Informazioni camera iperbarica" },
   dive_plan: { fr: "Plan de plongee", it: "Piano immersione" },
@@ -393,6 +396,9 @@ const I18N = {
   dive_base_website: { en: "Dive Base Website", de: "Webseite Tauchbasis", es: "Web base de buceo", ar: "موقع مركز الغوص" },
   oxygen_location: { en: "Oxygen Location", de: "Standort Sauerstoff", es: "Ubicación de oxígeno", ar: "مكان الاكسجين" },
   local_emergency_number: { en: "Local Emergency Number", de: "Lokale Notrufnummer", es: "Numero local de emergencia", ar: "رقم الطوارئ المحلي" },
+  emergency_number_hospital: { en: "Emergency Number / Hospital", de: "Notrufnummer / Krankenhaus", es: "Numero de emergencia / Hospital", ar: "رقم الطوارئ / المستشفى" },
+  hospital_info: { en: "Emergency Hospital (name and address)", de: "Notfallkrankenhaus (Name und Adresse)", es: "Hospital de emergencia (nombre y direccion)", ar: "مستشفى الطوارئ (الاسم والعنوان)" },
+  hospital: { en: "Hospital", de: "Krankenhaus", es: "Hospital", ar: "المستشفى" },
   emergency_phone_location: { en: "Emergency Phone Location", de: "Standort Notruftelefon", es: "Ubicación teléfono de emergencia", ar: "مكان هاتف الطوارئ" },
   chamber_info: { en: "Hyperbaric Chamber Information (Address and Emergency Contact Phone)", de: "Informationen zur Druckkammer (Adresse und Notfall-Telefonnummer)", es: "Informacion de camara hiperbárica (direccion y telefono de emergencia)", ar: "معلومات غرفة الضغط (العنوان ورقم هاتف الطوارئ)" },
   dive_plan: { en: "Dive Plan", de: "Tauchplan", es: "Plan de buceo", ar: "خطة الغوص" },
@@ -665,6 +671,8 @@ async function runLocateAddressLookup() {
     setField("dive_site.local_emergency_number", state.dive_site.local_emergency_number);
     state.meta.auto_local_language = resolveLocalLanguage(state.dive_site.country_code);
     const elevationM = await fetchApproxElevation(coords.lat, coords.lon);
+    const nearestHospital = await findNearestEmergencyHospitalByCar(coords.lat, coords.lon);
+    setField("dive_site.hospital_info", nearestHospital?.displayText || "");
     if (elevationM !== null) {
       syncMeasurementDisplayFromMeters("elevation", elevationM);
     }
@@ -676,7 +684,8 @@ async function runLocateAddressLookup() {
     updateLanguageUiState();
     const elevationText = elevationM !== null ? ` | Elevation: ~${elevationM} m` : "";
     const nameText = coords.resolvedName ? ` | Name: ${coords.resolvedName}` : "";
-    setStatus(`Address resolved: ${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)}${elevationText}${nameText}`);
+    const hospitalText = nearestHospital?.name ? ` | Hospital: ${nearestHospital.name}` : "";
+    setStatus(`Address resolved: ${coords.lat.toFixed(5)}, ${coords.lon.toFixed(5)}${elevationText}${nameText}${hospitalText}`);
   } catch (err) {
     showErrorToast(`Address lookup failed: ${err.message}`);
   }
@@ -691,6 +700,7 @@ clearDiveSiteLookupBtn.addEventListener("click", () => {
   setField("dive_site.dive_base_phone", "");
   setField("dive_site.dive_base_website", "");
   setField("dive_site.local_emergency_number", "");
+  setField("dive_site.hospital_info", "");
   state.dive_site.country_code = null;
   state.meta.auto_local_language = "none";
   readFormIntoState(state);
@@ -767,6 +777,7 @@ function createDefaultState() {
       dive_base_website: "",
       oxygen_location: "",
       local_emergency_number: "",
+      hospital_info: "",
       emergency_phone_location: "",
       chamber_info: ""
     },
@@ -825,6 +836,7 @@ function loadStateFromData(target, data) {
   target.dive_site.local_emergency_number =
     data.dive_site?.local_emergency_number ||
     getLocalEmergencyNumber(target.dive_site.country_code);
+  target.dive_site.hospital_info = data.dive_site?.hospital_info || "";
   target.plan = data.plan;
   target.divers = data.divers;
 }
@@ -843,6 +855,7 @@ function hydrateFormFromState(data) {
   setField("dive_site.dive_base_website", data.dive_site.dive_base_website || "");
   setField("dive_site.oxygen_location", data.dive_site.oxygen_location || "");
   setField("dive_site.local_emergency_number", data.dive_site.local_emergency_number || "");
+  setField("dive_site.hospital_info", data.dive_site.hospital_info || "");
   setField("dive_site.emergency_phone_location", data.dive_site.emergency_phone_location || "");
   setField("dive_site.chamber_info", data.dive_site.chamber_info || "");
   setField("plan.summary", data.plan.summary);
@@ -987,6 +1000,7 @@ function readFormIntoState(data) {
   data.dive_site.dive_base_website = getField("dive_site.dive_base_website");
   data.dive_site.oxygen_location = getField("dive_site.oxygen_location");
   data.dive_site.local_emergency_number = getField("dive_site.local_emergency_number");
+  data.dive_site.hospital_info = getField("dive_site.hospital_info");
   data.dive_site.emergency_phone_location = getField("dive_site.emergency_phone_location");
   data.dive_site.chamber_info = getField("dive_site.chamber_info");
   data.plan.summary = getField("plan.summary");
@@ -1112,8 +1126,9 @@ function buildPrimaryCardPage(data, coordsText, whoTableHtml, exportLanguageCoun
 function buildWhereTable(data, coordsText) {
   const rows = [
     {
-      key: "local_emergency_number",
-      value: `<strong>${escapeHtml(data.dive_site.local_emergency_number || "-")}</strong>`,
+      key: "emergency_number_hospital",
+      labelKey: "emergency_number_hospital",
+      value: buildEmergencyAccessValue(data.dive_site.local_emergency_number, data.dive_site.hospital_info),
       className: "row-emergency-number row-emergency-number-top"
     },
     { key: "site", value: escapeHtml(data.dive_site.name), className: "row-site" },
@@ -1136,8 +1151,8 @@ function buildWhereTable(data, coordsText) {
       className: "row-dive-base-phone"
     },
     { key: "dive_base_website", value: escapeHtml(data.dive_site.dive_base_website || "-"), className: "row-dive-base-website" },
-    { key: "oxygen_location", value: escapeHtml(data.dive_site.oxygen_location || "-"), className: "row-oxygen" },
     { key: "emergency_phone_location", value: escapeHtml(data.dive_site.emergency_phone_location || "-"), className: "row-emergency-phone-location" },
+    { key: "oxygen_location", value: escapeHtml(data.dive_site.oxygen_location || "-"), className: "row-oxygen" },
     { key: "chamber_info", labelKey: "hyperbaric_chamber", value: escapeHtml(data.dive_site.chamber_info || "-"), className: "row-chamber-info" }
   ];
   return buildIconCompactTable(rows, {
@@ -1145,6 +1160,21 @@ function buildWhereTable(data, coordsText) {
     renderLabel: (row) => biHtml(row.labelKey || row.key),
     renderValue: (row) => row.value
   });
+}
+
+function buildEmergencyAccessValue(localEmergencyNumber, hospitalInfo) {
+  const number = String(localEmergencyNumber || "").trim();
+  const hospital = String(hospitalInfo || "").trim();
+  if (number && hospital) {
+    return `<strong>${escapeHtml(number)}</strong> - ${escapeHtml(hospital)}`;
+  }
+  if (number) {
+    return `<strong>${escapeHtml(number)}</strong>`;
+  }
+  if (hospital) {
+    return escapeHtml(hospital);
+  }
+  return "-";
 }
 
 function buildWhatTable(data) {
@@ -1175,6 +1205,7 @@ function getCompactTableIcons() {
     "row-emergency-phone-location": { src: "assets/export-icons/emergency-phone-location.png", alt: "Emergency phone location" },
     "row-dive-base-website": { src: "assets/export-icons/dive-base-website.png", alt: "Dive base website" },
     "row-oxygen": { src: "assets/export-icons/oxygen-location.png", alt: "Oxygen location" },
+    "row-hospital-info": { src: "assets/export-icons/address.png", alt: "Hospital" },
     "row-chamber-info": { src: "assets/export-icons/hyperbaric-chamber.png", alt: "Hyperbaric chamber" },
     "row-plan": { src: "assets/export-icons/dive-plan-summary.png", alt: "Dive plan summary" },
     "row-max-depth": { src: "assets/export-icons/max-depth.png", alt: "Max depth" },
@@ -1876,6 +1907,127 @@ function uniquePreserveOrder(items) {
   return result;
 }
 
+async function findNearestEmergencyHospitalByCar(lat, lon) {
+  try {
+    const hospitals = await fetchNearbyHospitals(lat, lon);
+    if (hospitals.length === 0) return null;
+    const bestHospital = hospitals[0];
+    return {
+      ...bestHospital,
+      displayText: formatHospitalDisplay(bestHospital)
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchNearbyHospitals(lat, lon) {
+  const searchTerms = ["hospital", "emergency hospital"];
+  const searchRadiiM = [5000, 15000, 30000];
+
+  for (const radiusM of searchRadiiM) {
+    const bbox = buildBoundingBox(lat, lon, radiusM);
+    const matches = [];
+
+    for (const term of searchTerms) {
+      const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=10&addressdetails=1&namedetails=1&q=${encodeURIComponent(term)}&bounded=1&viewbox=${encodeURIComponent(bbox)}`;
+      const response = await fetch(url, {
+        headers: { Accept: "application/json" }
+      });
+      if (!response.ok) {
+        continue;
+      }
+      const payload = await response.json();
+      const results = Array.isArray(payload) ? payload : [];
+      for (const result of results) {
+        const normalized = normalizeHospitalSearchResult(result, lat, lon);
+        if (normalized) matches.push(normalized);
+      }
+    }
+
+    const uniqueMatches = uniqueHospitalsByLocation(matches)
+      .sort((a, b) => a.crowDistanceM - b.crowDistanceM)
+      .slice(0, 8);
+
+    if (uniqueMatches.length > 0) {
+      return uniqueMatches;
+    }
+  }
+
+  return [];
+}
+
+function normalizeHospitalSearchResult(result, originLat, originLon) {
+  const resultLat = toNullableNum(result?.lat);
+  const resultLon = toNullableNum(result?.lon);
+  if (resultLat === null || resultLon === null) return null;
+
+  const category = String(result?.category || "").toLowerCase();
+  const type = String(result?.type || "").toLowerCase();
+  const className = String(result?.class || "").toLowerCase();
+  const displayName = String(result?.display_name || "").toLowerCase();
+  const isHospitalLike =
+    category === "amenity" ||
+    className === "amenity" ||
+    type.includes("hospital") ||
+    displayName.includes("hospital") ||
+    displayName.includes("clinic") ||
+    displayName.includes("krankenhaus");
+  if (!isHospitalLike) return null;
+
+  const name = extractResolvedPlaceName(result) || "Hospital";
+  const address = extractResolvedAddress(result);
+  return {
+    name,
+    address,
+    lat: resultLat,
+    lon: resultLon,
+    crowDistanceM: calculateDistanceMeters(originLat, originLon, resultLat, resultLon)
+  };
+}
+
+function uniqueHospitalsByLocation(hospitals) {
+  const seen = new Set();
+  const result = [];
+  for (const hospital of hospitals) {
+    const key = `${hospital.name.toLowerCase()}|${roundTo5(hospital.lat)}|${roundTo5(hospital.lon)}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(hospital);
+  }
+  return result;
+}
+
+function formatHospitalDisplay(hospital) {
+  const name = String(hospital?.name || "").trim();
+  const address = String(hospital?.address || "").trim();
+  if (name && address) return `${name}, ${address}`;
+  return name || address || "";
+}
+
+function buildBoundingBox(lat, lon, radiusM) {
+  const latDelta = radiusM / 111320;
+  const safeCos = Math.max(Math.cos((lat * Math.PI) / 180), 0.1);
+  const lonDelta = radiusM / (111320 * safeCos);
+  const left = roundTo5(lon - lonDelta);
+  const top = roundTo5(lat + latDelta);
+  const right = roundTo5(lon + lonDelta);
+  const bottom = roundTo5(lat - latDelta);
+  return `${left},${top},${right},${bottom}`;
+}
+
+function calculateDistanceMeters(lat1, lon1, lat2, lon2) {
+  const toRad = (value) => (value * Math.PI) / 180;
+  const earthRadiusM = 6371000;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return earthRadiusM * c;
+}
+
 async function fetchApproxElevation(lat, lon) {
   try {
     const url =
@@ -2131,6 +2283,7 @@ function normalizeDiveSite(site) {
     dive_base_website: String(site?.dive_base_website || ""),
     oxygen_location: String(site?.oxygen_location || ""),
     local_emergency_number: String(site?.local_emergency_number || getLocalEmergencyNumber(site?.country_code)),
+    hospital_info: String(site?.hospital_info || ""),
     emergency_phone_location: String(site?.emergency_phone_location || ""),
     chamber_info: String(site?.chamber_info || "")
   };

@@ -8,7 +8,6 @@
 - Pruefen, wie der Export bei mehr als zwei Tauchern aussieht und ob das Layout dann noch sauber funktioniert.
 - Die Suche nach hyperbaren Kammern vereinfachen.
 - Eine Tauchplatzliste als Referenz fuer die Suche vorbereiten.
-- Im Projekt erwaehnen, dass die Idee aus dem Sidemount Podcast kommt.
 - Einen Aktivitaetscounter fuer das Projekt bzw. die Nutzung einbauen.
 
 ## Zweck

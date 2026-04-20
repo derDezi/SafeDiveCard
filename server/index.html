@@ -137,6 +137,7 @@
           <label><span data-i18n-key="dive_base_website">Dive Base Website</span> <input name="dive_site.dive_base_website"></label>
           <label><span data-i18n-key="oxygen_location">Oxygen Location</span> <input name="dive_site.oxygen_location"></label>
           <label><span data-i18n-key="local_emergency_number">Local Emergency Number</span> <input name="dive_site.local_emergency_number"></label>
+          <label><span data-i18n-key="hospital_info">Emergency Hospital (name and address)</span> <input name="dive_site.hospital_info"></label>
           <label><span data-i18n-key="emergency_phone_location">Emergency Phone Location</span> <input name="dive_site.emergency_phone_location"></label>
           <label><span data-i18n-key="chamber_info">Hyperbaric chamber information (Address and Emergency Contact Phone)</span> <input name="dive_site.chamber_info"></label>
         </fieldset>
@@ -200,9 +201,32 @@
 
   <section class="panel site-info">
     <h2>About SafeDiveCard</h2>
-    <p>SafeDiveCard helps divers create a structured emergency card with dive site, dive plan and diver information for safer dive coordination. The project is operated by Timo Schmitt.</p>
-    <p>You can reach me at <a href="mailto:safedivecard@it-schmitt.de">safedivecard@it-schmitt.de</a>. I appreciate every idea for improvement and I am also happy about friendly conversations around diving and the project.</p>
-    <p>The source code is available on GitHub: <a href="https://github.com/derDezi/SafeDiveCard" target="_blank" rel="noreferrer">github.com/derDezi/SafeDiveCard</a>. The ongoing development is implemented with Codex AI.</p>
+    <p class="site-info-intro">SafeDiveCard helps divers create a structured emergency card with dive site, dive plan and diver information for safer dive coordination. The project is operated by Timo Schmitt.</p>
+    <div class="podcast-origin">
+      <div class="podcast-origin-video">
+        <a class="podcast-origin-video-frame" href="https://www.youtube.com/watch?v=2HnBwrKarlw" target="_blank" rel="noreferrer" aria-label="Open Speaking Sidemount Episode 107 on YouTube">
+          <span class="podcast-origin-kicker">Speaking Sidemount</span>
+          <strong>Episode 107</strong>
+          <span>Stratis Kas &amp; Lionel Wolovitz</span>
+          <span>A Dive Gone Wrong</span>
+          <span class="podcast-origin-play">Watch on YouTube</span>
+        </a>
+        <p class="podcast-origin-link">
+          Clicking the preview opens YouTube directly. No external video player is loaded on this page before that click.
+        </p>
+      </div>
+      <div class="podcast-origin-copy">
+        <p>The idea for this project came from two places. My dive buddy and I had already been bringing a similar emergency sheet with us on dives because we wanted the most important information available quickly if something went wrong.</p>
+        <p>Listening to <a href="https://www.youtube.com/watch?v=2HnBwrKarlw" target="_blank" rel="noreferrer">Speaking Sidemount Episode 107 with Stratis Kas and Lionel Wolovitz</a> brought that topic back into focus in a very direct way. The episode describes a serious diving incident, the rescue effort, and how critical clear emergency information can become in a real situation.</p>
+        <p>That combination was the trigger for SafeDiveCard: instead of keeping such a document as a private workaround, I wanted to build a tool that makes it easier for other divers to create, update and share a structured emergency card before a trip or a dive day.</p>
+      </div>
+    </div>
+    <div class="site-info-block">
+      <p>You can reach me at <a href="mailto:safedivecard@it-schmitt.de">safedivecard@it-schmitt.de</a>. I appreciate every idea for improvement and I am also happy about friendly conversations around diving and the project.</p>
+    </div>
+    <div class="site-info-block">
+      <p>The source code is available on GitHub: <a href="https://github.com/derDezi/SafeDiveCard" target="_blank" rel="noreferrer">github.com/derDezi/SafeDiveCard</a>. The ongoing development is implemented with Codex AI.</p>
+    </div>
   </section>
 
   <details class="panel site-status">
